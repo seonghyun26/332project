@@ -1,0 +1,7 @@
+# Scala
+*.class
+*.log
+
+# IDE
+*.code-workspace
+.DS_Store
