@@ -6,5 +6,9 @@
 *.code-workspace
 .DS_Store
 
+# Build files
+project
+target
+
 # Hidden files
 .*
