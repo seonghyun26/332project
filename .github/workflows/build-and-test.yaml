@@ -1,0 +1,27 @@
+name: Build & Test
+run-name: operation requested by ${{ github.actor }}
+
+on:
+  push:
+    branches:
+      - main
+      - github-actions
+  pull_request:
+    branches:
+      - main
+jobs:
+  scalatest:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+      - name: Setup JDK
+        uses: actions/setup-java@v3
+        with:
+          distribution: adopt
+          java-version: 11
+          cache: sbt
+      - name: Build
+        run: sbt compile
+      - name: Unit Tests
+        run: sbt test
