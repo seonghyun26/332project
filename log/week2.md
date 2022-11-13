@@ -1,4 +1,5 @@
 # Weekly Progress Log
+2022/10/31 ~ 2022/11/06
 
 ## Works of the Members
 ### lemonholic

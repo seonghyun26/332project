@@ -1,4 +1,5 @@
 # Weekly Progress Log
+2022/10/24 ~ 2022/10/30
 
 ## Works of the Members
 ### dongyeop3813
