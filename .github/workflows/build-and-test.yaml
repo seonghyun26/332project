@@ -1,5 +1,5 @@
 name: Build & Test
-run-name: operation requested by ${{ github.actor }}
+# run-name: operation requested by ${{ github.actor }}
 
 on:
   push:
