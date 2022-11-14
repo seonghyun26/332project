@@ -15,6 +15,10 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v3
+      - name: Setup Python3
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.10'
       - name: Setup JDK
         uses: actions/setup-java@v3
         with:
@@ -23,5 +27,9 @@ jobs:
           cache: sbt
       - name: Build
         run: sbt compile
-      - name: Unit Tests
+      - name: Unit tests
         run: sbt test
+      - name: Package the programs
+        run: sbt assembly
+      - name: Correctness tests
+        run: python3 scripts/check_correctness.py
