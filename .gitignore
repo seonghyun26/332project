@@ -7,8 +7,10 @@
 .DS_Store
 
 # Build files
-project
 target
+
+# Misc
+metals.sbt
 
 # Hidden files
 .*
