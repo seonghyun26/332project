@@ -13,6 +13,11 @@ ThisBuild / libraryDependencies ++= Seq(
     scalatest % Test
   )
 
+ThisBuild / assembly / assemblyMergeStrategy := {
+  case PathList("META-INF", _*) => MergeStrategy.discard
+  case _ => MergeStrategy.first
+}
+
 lazy val root = (project in file("."))
   .aggregate(master, worker, network, common)
   .configs(IntegrationTest)
@@ -20,6 +25,7 @@ lazy val root = (project in file("."))
     Defaults.itSettings,
     libraryDependencies += scalatest % "it,test",
     run / aggregate := false,
+    assembly / aggregate := false,
   )
   .dependsOn(master, worker, network, common)
 
@@ -27,5 +33,11 @@ lazy val common = (project in file("common"))
 lazy val network = (project in file ("network"))
 lazy val master = (project in file("master"))
   .dependsOn(network, common)
+  .settings(
+    assembly / assemblyJarName := "master.jar",
+  )
 lazy val worker = (project in file("worker"))
   .dependsOn(network, common)
+  .settings(
+    assembly / assemblyJarName := "worker.jar",
+  )

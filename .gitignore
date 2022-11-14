@@ -12,6 +12,10 @@ target
 # Misc
 metals.sbt
 
+# Python
+*.pyc
+__pycache__/
+
 # Hidden files
 .*
 !.github
