@@ -6,6 +6,13 @@
 *.code-workspace
 .DS_Store
 
+# Python
+__pycache__/
+*.pyc
+*.pyi
+*.pyd
+*.pyo
+
 # Build files
 target
 
