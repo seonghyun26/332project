@@ -10,13 +10,15 @@ import worker.Tuple
 @RunWith(classOf[JUnitRunner])
 class ListsSuite extends FunSuite {
 
-    val source = Source.fromFile("./worker/partition1", "ISO8859-1")
-
-    val byte_list = source.take(100).toList.map {_.toByte}
-
+    /*
+    Test code is implementing now.
     test("Tuple Test") {
+        val source = Source.fromFile(filepath, "ISO8859-1")
+
+        val byte_list = source.take(100).toList.map {_.toByte}
+
         assert(Tuple(byte_list).key == byte_list.take(10))
         assert(Tuple(byte_list).value == byte_list.dropRight(90))
     }
-
+    */
 }
