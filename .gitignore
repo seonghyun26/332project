@@ -15,3 +15,6 @@ metals.sbt
 # Hidden files
 .*
 !.github
+
+# temporary binary files
+temp
