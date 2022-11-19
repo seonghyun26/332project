@@ -18,7 +18,6 @@ object Tuple{
 
 }
 
-
 class Tuple(key_ :List[Byte], value_ :List[Byte]){
     val key: List[Byte] = key_
     val value: List[Byte] = value_
