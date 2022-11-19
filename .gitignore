@@ -18,3 +18,4 @@ metals.sbt
 
 # temporary binary files
 temp
+gensort
