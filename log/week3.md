@@ -21,12 +21,12 @@
 
 ### lemonwater
 - What I did
-  - create simple example of a master and a worker
-  - write scripts for build and (unit) tests
-  - learn how to perform an integration test
+    - create simple example of a master and a worker
+    - write scripts for build and (unit) tests
+    - learn how to perform an integration test
 - What to do next week
-  - setup integration test
-  - participate in designing the network protocol
+    - setup integration test
+    - participate in designing the network protocol
 
 ## Completed Milestones
 - A detailed design of the sorting algorithm
