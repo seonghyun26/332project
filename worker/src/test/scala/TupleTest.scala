@@ -13,6 +13,8 @@ class TupleSuite extends AnyFunSuite {
 
     "./scripts/get-gensort.sh -q" !
 
+    "mkdir temp" !
+
     "./gensort/gensort -b 1000 ./temp/partition1" !
 
     test("Tuple Load Test") {
