@@ -1,0 +1,47 @@
+syntax = "proto3";
+
+package protos;
+
+service Distsort {
+  rpc WorkerReady (ReadyRequest) returns (ReadyReply) {}
+
+  // rpc KeyRange (stream KeyRangeRequest) returns (stream KeyRangeReply) {}
+  
+  rpc Partition (PartitionRequest) returns (PartitionReply) {}
+
+  rpc SortFinish (SortFinishRequest) returns (SortFinishReply) {}
+}
+
+message ReadyRequest {
+  bool ready = 1;
+}
+
+message ReadyReply {
+  string message = 1;
+  bool finish = 2;
+}
+
+// message KeyRangeRequest {
+//   int32 sampledNumber = 1;
+// }
+
+// message KeyRangeReply {
+//   int32 lowerBound = 1;
+//   int32 upperBound = 2;
+// }
+
+message PartitionRequest {
+  bool ready = 1;
+}
+
+message PartitionReply {
+  bool finish = 1;
+}
+
+message SortFinishRequest {
+  bool ready = 1;
+}
+
+message SortFinishReply {
+  bool finish = 1;
+}
