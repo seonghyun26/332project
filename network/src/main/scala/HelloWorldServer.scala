@@ -51,9 +51,14 @@ class HelloWorldServer(executionContext: ExecutionContext) { self =>
     }
   }
 
+  private def getMessage(): String = {
+    "Hello~ "
+  }
+
   private class GreeterImpl extends GreeterGrpc.Greeter {
     override def sayHello(req: HelloRequest) = {
-      val reply = HelloReply(message = "Hello " + req.name)
+      val messageTest = getMessage()
+      val reply = HelloReply(message = messageTest + req.name)
       Future.successful(reply)
     }
   }
