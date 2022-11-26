@@ -25,13 +25,19 @@ object DistSortClient {
     new DistSortClient(channel, blockingStub)
   }
 
+  // NOTE: Main code what client does
   def main(args: Array[String]): Unit = {
     val host = "localhost"
-    val port = 50054
+    val port = 50055
     val client = DistSortClient(host, port)
     try {
-      val user = args.headOption.getOrElse("world")
-      client.ready(user)
+      val user = "Worker" + args.headOption.getOrElse("1")
+      var syncPointOne = client.ready(user)
+      
+      if (syncPointOne == true) {
+        println("Sync Point 1 passed")
+      }
+
     } finally {
       client.shutdown()
     }
@@ -48,17 +54,19 @@ class DistSortClient private(
     channel.shutdown.awaitTermination(5, TimeUnit.SECONDS)
   }
 
-  /** Say hello to server. */
-  def ready(name: String): Unit = {
-    logger.info("Worker #1 ready")
-    val request = ReadyRequest(ready = true)
+  def ready(name: String): Boolean = {
+    logger.info(name + " ready")
+
+    val request = ReadyRequest(workerName = name, ready = true)
     try {
       val response = blockingStub.workerReady(request)
       logger.info("Master: " + response.message)
+      return response.finish
     }
     catch {
       case e: StatusRuntimeException =>
         logger.log(Level.WARNING, "RPC failed: {0}", e.getStatus)
+        return false
     }
   }
 }

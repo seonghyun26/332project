@@ -23,13 +23,14 @@ import protos.distsort.{
 object DistSortServer {
   private val logger = Logger.getLogger(classOf[DistSortServer].getName)
 
+  // NOTE: main code where server starts
   def main(args: Array[String]): Unit = {
     val server = new DistSortServer(ExecutionContext.global)
     server.start()
     server.blockUntilShutdown()
   }
 
-  private val port = 50054
+  private val port = 50055
 }
 
 class DistSortServer(executionContext: ExecutionContext) { self =>
@@ -62,14 +63,16 @@ class DistSortServer(executionContext: ExecutionContext) { self =>
   }
 
   private class DistsortImpl extends DistsortGrpc.Distsort {
-    private var workerNumbers: Int = 10;
+    private var workerNumbers: Int = 2;
     private var readyCnt:Int = 0;
 
     override def workerReady(req: ReadyRequest) = {
       readyCnt = readyCnt + 1;
+      println("Received " + req.workerName + "signal")
 
       while(readyCnt < workerNumbers){
-        println(readyCnt)
+        Thread.sleep(1000)
+        println(LocalDateTime.now() + "," + readyCnt)
       }
 
       val message = getReadyMessage()
@@ -77,7 +80,7 @@ class DistSortServer(executionContext: ExecutionContext) { self =>
       Future.successful(reply)
     }
 
-    // override def keyRange(req: KeyRangeRequest) = {
+    // override def keyRange(req: Stream[KeyRangeRequest]) = {
     //   val reply = KeyRangeReply()
     //   Future.successful(reply)
     // }
