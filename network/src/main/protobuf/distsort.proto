@@ -13,7 +13,8 @@ service Distsort {
 }
 
 message ReadyRequest {
-  bool ready = 1;
+  string workerName = 1;
+  bool ready = 2;
 }
 
 message ReadyReply {
