@@ -17,16 +17,16 @@ import protos.helloworld.{HelloRequest, HelloReply, GreeterGrpc}
 object HelloWorldServer {
   private val logger = Logger.getLogger(classOf[HelloWorldServer].getName)
 
-  def main(args: Array[String]): Unit = {
-    val server = new HelloWorldServer(ExecutionContext.global)
-    server.start()
-    server.blockUntilShutdown()
-  }
+  // def main(args: Array[String]): Unit = {
+  //   val server = new HelloWorldServer(ExecutionContext.global)
+  //   server.start()
+  //   server.blockUntilShutdown()
+  // }
 
   private val port = 50051
 }
 
-class HelloWorldServer(executionContext: ExecutionContext) { self =>
+abstract class HelloWorldServer(executionContext: ExecutionContext) { self =>
   private[this] var server: Server = null
 
   private def start(): Unit = {
@@ -62,5 +62,4 @@ class HelloWorldServer(executionContext: ExecutionContext) { self =>
       Future.successful(reply)
     }
   }
-
 }

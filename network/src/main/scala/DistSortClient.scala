@@ -1,5 +1,4 @@
-package network.distsort
-
+package network.distsort.client
 
 import io.grpc.{Channel, StatusRuntimeException, ManagedChannelBuilder, ManagedChannel}
 import java.util.logging.{Level, Logger};

@@ -1,4 +1,4 @@
-package network.distsort
+package network.distsort.server
 
 import io.grpc.{Server, ServerBuilder};
 import io.grpc.stub.StreamObserver;
