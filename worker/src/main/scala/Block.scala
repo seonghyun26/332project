@@ -7,49 +7,47 @@ import common._
 
 
 class Block(filepath: String){
-    val filename: String = filepath.split("/").last
-    val dir: String = filepath.split("/").dropRight(1).mkString("/")
+  val fileName: String = filepath.split("/").last
+  val dir: String = filepath.split("/").dropRight(1).mkString("/")
 
-    var temp_dir: String = filepath
-    var key_range: (Int, Int) = (0, 0)
-    var file_size: Int = 0
+  var tempDir: String = filepath
+  var keyRange: Option[(Int, Int)] = None
+  var fileSize: Option[Int] = None
 
-    var num_tuples: Int = 0
+  var numTuples: Option[Int] = None
 
-    var buf: Array[Tuple] = Array()
+  var buf: Array[Tuple] = Array()
 
-    def toStream: Stream[Tuple] = {
-        val source = Source.fromFile(filepath, "ISO8859-1")
+  def toStream: Stream[Tuple] = {
+    val source = Source.fromFile(filepath, "ISO8859-1")
 
-        def stream: Stream[Tuple] = {
-            if(!source.hasNext) Stream.empty
-            else {
-                val char_list = source.take(100).toList
-                val byte_list = char_list.map {_.toByte}
-                Tuple.fromBytes(byte_list) #:: stream
-            }
-        }
-
-        stream
+    def stream: Stream[Tuple] = {
+    if(!source.hasNext) Stream.empty
+      else {
+        val byte_list = source.take(100).toList.map {_.toByte}
+        Tuple.fromBytes(byte_list) #:: stream
+      }
     }
 
-    def toList: List[Tuple] = {
-        toStream.toList
-    }
+    stream
+  }
 
-    def sorted: List[Tuple] = {
-        toList.sortWith{(a: Tuple, b: Tuple) => a < b}
-    }
+  def toList: List[Tuple] = {
+    toStream.toList
+  }
 
-    def sample(sample_size: Int): List[Tuple] = {
-        val rand = new Random()
-        val population = toList
-        val sample_idx = (1 to sample_size).map{ _ => rand.nextInt(population.length) }
-        sample_idx.map { idx => population(idx) }.toList
-    }
+  def sorted: List[Tuple] = {
+    toList.sortWith{(a: Tuple, b: Tuple) => a < b}
+  }
 
-    def divideByPartition(partition: List[Int]): List[Block] = ???
+  def sample(sample_size: Int): List[Tuple] = {
+    val rand = new Random()
+    val population = toList
+    val sample_idx = (1 to sample_size).map{ _ => rand.nextInt(population.length) }
+    sample_idx.map { idx => population(idx) }.toList
+  }
 
-    def sortThenSaveTo(dst: Block): Unit = ???
+  def divideByPartition(partition: List[Int]): List[Block] = ???
 
+  def sortThenSaveTo(dst: Block): Unit = ???
 }
