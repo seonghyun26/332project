@@ -23,7 +23,7 @@ class TupleSuite extends AnyFunSuite {
 
         val byte_list = source.take(100).toList.map {_.toByte}
 
-        assert(Tuple(byte_list).key == byte_list.take(10))
+        assert(Tuple(byte_list).key.value == byte_list.take(10))
         assert(Tuple(byte_list).value == byte_list.drop(10))
     }
 
