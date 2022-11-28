@@ -10,11 +10,13 @@ class Block(filepath: String){
   val fileName: String = filepath.split("/").last
   val dir: String = filepath.split("/").dropRight(1).mkString("/")
 
-  var tempDir: String = filepath
+  var tempDir: Option[String] = None
   var keyRange: Option[(Int, Int)] = None
   var fileSize: Option[Int] = None
 
   var numTuples: Option[Int] = None
+
+  def setTempDir(path: String): Unit = { tempDir = Some(path) }
 
   def toStream: Stream[Tuple] = {
     val source = Source.fromFile(filepath, "ISO8859-1")
@@ -26,7 +28,6 @@ class Block(filepath: String){
         Tuple.fromBytes(byte_list) #:: stream
       }
     }
-
     stream
   }
 
@@ -45,7 +46,12 @@ class Block(filepath: String){
     sample_idx.map { idx => population(idx) }.toList
   }
 
-  def divideByPartition(partition: List[Int]): List[Block] = ???
+  def divideByPartition(partition: List[Key]): List[Block] = {
+    require { tempDir != None }
+    List()
+  }
 
-  def sortThenSaveTo(dst: Block): Unit = ???
+  def sortThenSaveTo(dst: Block): Unit = {
+    
+  }
 }

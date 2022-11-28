@@ -1,12 +1,11 @@
 
 package worker
 
-object Key {
+object Key extends Sortable[Key]{
   def apply(byte: List[Byte]): Key = new Key(byte)
 }
 
-
-class Key(val value: List[Byte]) {
+class Key(val value: List[Byte]) extends Comparable[Key]{
   def length = value.length
 
   def <(other: Key): Boolean = {

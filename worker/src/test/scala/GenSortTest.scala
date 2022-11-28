@@ -3,18 +3,12 @@ package test
 import org.scalatest.funsuite.AnyFunSuite
 import scala.io.Source
 
-
-import sys.process._
-import java.io.FileNotFoundException
+import Partition.loadPartition
 
 
 class GenSortSuite extends AnyFunSuite {
 
-    "./scripts/get-gensort.sh -q" !
-
-    "mkdir temp" !
-
-    "./gensort/gensort -b 1000 ./temp/partition1" !
+    loadPartition()
 
     test("Partition Generation Test") {
 
