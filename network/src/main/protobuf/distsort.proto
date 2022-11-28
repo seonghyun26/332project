@@ -4,8 +4,8 @@ package protos;
 
 service Distsort {
   rpc WorkerReady (ReadyRequest) returns (ReadyReply) {}
-
-  // rpc KeyRange (stream KeyRangeRequest) returns (stream KeyRangeReply) {}
+  // Server-Side Streaming for Key Range
+  rpc KeyRange (KeyRangeRequest) returns (stream KeyRangeReply) {}
   
   rpc Partition (PartitionRequest) returns (PartitionReply) {}
 
@@ -14,35 +14,26 @@ service Distsort {
 
 message ReadyRequest {
   string workerName = 1;
-  bool ready = 2;
 }
 
-message ReadyReply {
-  string message = 1;
-  bool finish = 2;
+message ReadyReply {}
+
+message KeyRangeRequest {
+  int32 populationSize = 1;
+  int32 numSamples = 2;
+  repeated bytes samples = 3;
 }
 
-// message KeyRangeRequest {
-//   int32 sampledNumber = 1;
-// }
-
-// message KeyRangeReply {
-//   int32 lowerBound = 1;
-//   int32 upperBound = 2;
-// }
-
-message PartitionRequest {
-  bool ready = 1;
+message KeyRangeReply {
+  bytes lowerBound = 1;
+  bytes upperBound = 2;
+  string workerIpAddress = 3;
 }
 
-message PartitionReply {
-  bool finish = 1;
-}
+message PartitionRequest {}
 
-message SortFinishRequest {
-  bool ready = 1;
-}
+message PartitionReply {}
 
-message SortFinishReply {
-  bool finish = 1;
-}
+message SortFinishRequest {}
+
+message SortFinishReply {}
