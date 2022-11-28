@@ -15,7 +15,10 @@ object Tuple{
 }
 
 class Tuple(key_ :List[Byte], value_ :List[Byte]){
-  val key: List[Byte] = key_
+  require(key_.length == 10)
+  require(value_.length == 90)
+
+  val key: Key = Key(key_)
   val value: List[Byte] = value_
 
   def byteListToString(byte_list: List[Byte]): String = {
@@ -23,17 +26,9 @@ class Tuple(key_ :List[Byte], value_ :List[Byte]){
   }
 
   override def toString(): String = {
-    "TUPLE : " + byteListToString(key) + " |" + byteListToString(value)
+    "TUPLE : " + byteListToString(key.value) + " |" + byteListToString(value)
   }
 
-  def <(other: Tuple): Boolean = {
-    require(key.length == other.key.length)
-
-    def less(a: List[Byte], b: List[Byte]): Boolean = {
-      if (a.isEmpty && b.isEmpty) return false
-      else (a.head < b.head) || (a.head == b.head && less(a.tail, b.tail))
-    }
-    less(key, other.key)
-  }
+  def <(other: Tuple): Boolean = key < other.key
 
 }
