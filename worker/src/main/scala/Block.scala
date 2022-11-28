@@ -16,8 +16,6 @@ class Block(filepath: String){
 
   var numTuples: Option[Int] = None
 
-  var buf: Array[Tuple] = Array()
-
   def toStream: Stream[Tuple] = {
     val source = Source.fromFile(filepath, "ISO8859-1")
 
