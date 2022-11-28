@@ -3,7 +3,7 @@ package worker
 import java.lang.IllegalArgumentException
 
 
-object Tuple{
+object Tuple extends Sortable[Tuple] {
     // Tuple(List[Byte]) would be a constructor of tuple.
   def apply(byte: List[Byte]): Tuple = Tuple.fromBytes(byte)
 
@@ -12,9 +12,10 @@ object Tuple{
     val (key, value) = byte.splitAt(10)
     new Tuple(key, value)
   }
+
 }
 
-class Tuple(key_ :List[Byte], value_ :List[Byte]){
+class Tuple(key_ :List[Byte], value_ :List[Byte]) extends Comparable[Tuple] {
   require(key_.length == 10)
   require(value_.length == 90)
 
@@ -26,9 +27,9 @@ class Tuple(key_ :List[Byte], value_ :List[Byte]){
   }
 
   override def toString(): String = {
-    "TUPLE : " + byteListToString(key.value) + " |" + byteListToString(value)
+    "TUPLE : " + byteListToString(key.value)
   }
 
-  def <(other: Tuple): Boolean = key < other.key
+  override def <(other: Tuple): Boolean = key < other.key
 
 }
