@@ -1,4 +1,4 @@
-package distsort
+package network.distsort
 
 
 import io.grpc.{Channel, StatusRuntimeException, ManagedChannelBuilder, ManagedChannel}
@@ -7,10 +7,14 @@ import java.util.concurrent.TimeUnit;
 import java.time.LocalDateTime;
 import java.util.Iterator;
 
+import com.google.protobuf.ByteString
+
 import protos.distsort.{
   DistsortGrpc, 
   ReadyRequest,
   ReadyReply,
+  KeyRangeRequest,
+  KeyRangeReply,
   PartitionRequest,
   PartitionReply,
   SortFinishRequest,
@@ -28,17 +32,29 @@ object DistSortClient {
   // NOTE: Main code what client does
   def main(args: Array[String]): Unit = {
     val host = "localhost"
-    val port = 50055
+    val port = 50058
     val client = DistSortClient(host, port)
+    val samples: List[ByteString] = List(
+      ByteString.copyFromUtf8("b"),
+      ByteString.copyFromUtf8("c"),
+      ByteString.copyFromUtf8("e"),
+      ByteString.copyFromUtf8("t")
+    )
+
     try {
-      val user = "Worker" + args.headOption.getOrElse("1")
-      var syncPointOne = client.ready(user)
-      
-      if (syncPointOne == true) {
-        println("Sync Point 1 passed")
+      val worker = "Worker" + args.headOption.getOrElse("1")
+      var syncPointOne = client.ready(worker)
+      if (syncPointOne) {
+        println("Sync Point 1 passed\n")
+      }
+
+      var syncPointTwo = client.sendKeyRange(worker, samples)
+      if (syncPointTwo) {
+        println("Sync Point 2 passed\n")
       }
 
     } finally {
+      println("Worker finished!")
       client.shutdown()
     }
   }
@@ -55,18 +71,39 @@ class DistSortClient private(
   }
 
   def ready(name: String): Boolean = {
-    logger.info(name + " ready")
+    logger.info(name + " is ready")
 
-    val request = ReadyRequest(workerName = name, ready = true)
+    val request = ReadyRequest(workerName = name)
     try {
       val response = blockingStub.workerReady(request)
-      logger.info("Master: " + response.message)
-      return response.finish
+      println(" >> Master: All workers are ready!")
     }
     catch {
       case e: StatusRuntimeException =>
-        logger.log(Level.WARNING, "RPC failed: {0}", e.getStatus)
+        logger.info("RPC failed in client ready")
         return false
     }
+
+    return true
+  }
+
+  def sendKeyRange(name: String, samples: List[ByteString]): Boolean = {
+    logger.info(name + " sending key range")
+
+    
+
+    val request = KeyRangeRequest(populationSize = 10, numSamples = 4, samples = samples)
+    try {
+      val responses = blockingStub.keyRange(request)
+      for(reply <- responses){
+        println(" >> Master: Key range at '" + reply.workerIpAddress + "'" + ": " + reply.lowerBound.toString("UTF-8") + ", " + reply.upperBound.toString("UTF-8"))
+      }
+    } catch {
+      case e: StatusRuntimeException =>
+        logger.info("RPC failed in client keyRange")
+        return false
+    }
+
+    return true
   }
 }
