@@ -1,8 +1,22 @@
 
-package worker
+package common
 
 trait Comparable[T <: Comparable[T]] {
   def <(other: T): Boolean
+
+  def ==(other: T): Boolean
+
+  def <=(other: T): Boolean = {
+    <(other) || ==(other)
+  }
+
+  def >(other: T): Boolean = {
+    !(<(other)) && !(==(other))
+  }
+
+  def >=(other: T): Boolean = {
+    !(<(other))
+  }
 }
 
 trait Sortable[T <: Comparable[T]] {

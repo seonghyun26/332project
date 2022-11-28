@@ -1,6 +1,7 @@
 package worker
 
 import java.lang.IllegalArgumentException
+import common._
 
 
 object Tuple extends Sortable[Tuple] {
@@ -32,4 +33,7 @@ class Tuple(key_ :List[Byte], value_ :List[Byte]) extends Comparable[Tuple] {
 
   override def <(other: Tuple): Boolean = key < other.key
 
+  override def ==(other: Tuple): Boolean = key == other.key
+
+  def toBytes: List[Byte] = (key.value ++ value)
 }
