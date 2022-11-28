@@ -26,4 +26,25 @@ class BlockSuite extends AnyFunSuite {
   test("Block Sample Test") {
     assert(block1.sample(20).length == 20)
   }
+
+  test("Partition Division Test 1") {
+    val sample = block1.sample(19) map {t => t.key}
+
+    val partitioned = Block.divideTuplesByPartition(block1.toList, sample)
+
+    val list = partitioned.toList map {
+      case (a: Int, b: List[Tuple]) => b
+    }
+
+    assert(partitioned.size <= 20)
+    assert(list.flatten.length == block1.toList.length)
+  }
+
+  test("Partition Division Test 2") {
+    val sample = block1.sample(9) map {t => t.key}
+    block1.tempDir = Some("./temp/block1")
+
+    println(block1.divideByPartition(sample))
+    assert(true)
+  }
 }
