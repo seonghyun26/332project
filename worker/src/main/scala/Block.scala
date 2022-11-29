@@ -25,31 +25,36 @@ object Block {
     require(tuples.length <= maxSize)
 
     // Save the tuples to path
-
-    val byteList = tuples.foldLeft(List[Byte]()){
-      (acc: List[Byte], tuple: Tuple) => tuple.toBytes ++ acc
+    val byteList = tuples.foldRight(List[Byte]()){
+      (tuple: Tuple, acc: List[Byte]) => tuple.toBytes ++ acc
     }
+
+    assert {byteList.take(10) == tuples(0).key.value}
 
     writeBytes(byteList.toStream, new File(path))
 
     new Block(path)
   }
 
-  def save(tempDir: String, tuples: List[Tuple]): List[Block] = {
+  def save(tempDir: String, tuples: Iterable[Tuple]): List[Block] = {
 
-    def rec(tuples: List[Tuple], idx: Int): List[Block] = {
+    def rec(tuples: Iterable[Tuple], idx: Int): List[Block] = {
       if (tuples.isEmpty) List()
       else {
         val (frontTuples, left) = tuples splitAt maxSize
-        saveOne(tempDir + "/" + idx, frontTuples) :: rec(left, idx + 1)
+        saveOne(tempDir + "/" + idx, frontTuples.toList) :: rec(left, idx + 1)
       }
     }
+
     rec(tuples, 0)
   }
 }
 
 
 class Block(filepath: String){
+
+  require { new File(filepath).exists() }
+
   val fileName: String = filepath.split("/").last
   val dir: String = filepath.split("/").dropRight(1).mkString("/")
 
@@ -64,7 +69,7 @@ class Block(filepath: String){
     val source = Source.fromFile(filepath, "ISO8859-1")
 
     def stream: Stream[Tuple] = {
-    if(!source.hasNext) Stream.empty
+      if(!source.hasNext) Stream.empty
       else {
         val byte_list = source.take(100).toList.map {_.toByte}
         Tuple.fromBytes(byte_list) #:: stream
@@ -122,7 +127,7 @@ class Block(filepath: String){
     ).toList
   }
 
-  def sortThenSaveTo(dst: Block): Unit = {
-    
+  def sortThenSaveTo(dst: String): Block = {
+    Block.saveOne(dst, sorted)
   }
 }

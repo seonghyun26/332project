@@ -10,4 +10,5 @@ package object common {
         val target = new BufferedOutputStream( new FileOutputStream(file) )
         try data.foreach{ target.write(_) } finally target.close
     }
+
 }

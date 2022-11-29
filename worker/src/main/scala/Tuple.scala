@@ -1,6 +1,8 @@
 package worker
 
 import java.lang.IllegalArgumentException
+import scala.math.BigInt
+
 import common._
 
 
@@ -13,7 +15,6 @@ object Tuple extends Sortable[Tuple] {
     val (key, value) = byte.splitAt(10)
     new Tuple(key, value)
   }
-
 }
 
 class Tuple(key_ :List[Byte], value_ :List[Byte]) extends Comparable[Tuple] {
@@ -23,12 +24,17 @@ class Tuple(key_ :List[Byte], value_ :List[Byte]) extends Comparable[Tuple] {
   val key: Key = Key(key_)
   val value: List[Byte] = value_
 
+  def byteToString(byte: Byte): String = {
+    val str = byte.toHexString
+    ("00000000" + str).substring(str.length)
+  }
+
   def byteListToString(byte_list: List[Byte]): String = {
-    (byte_list map {_.toHexString}).mkString(" ")
+    (byte_list map byteToString).mkString(" ")
   }
 
   override def toString(): String = {
-    "TUPLE : " + byteListToString(key.value)
+    "TUPLE : %s".format(byteListToString(key.value))
   }
 
   override def <(other: Tuple): Boolean = key < other.key

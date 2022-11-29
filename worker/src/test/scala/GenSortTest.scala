@@ -3,7 +3,7 @@ package test
 import org.scalatest.funsuite.AnyFunSuite
 import scala.io.Source
 
-import Partition.loadPartition
+import test.util._
 
 
 class GenSortSuite extends AnyFunSuite {
