@@ -4,7 +4,7 @@ package worker
 
 object Worker {
 
-  val outputDir = "./output"
+  val outputDir = "./temp/output"
 
   def merge(blocks: List[Block]): List[Block] = {
     val streamList: List[Stream[Tuple]] = blocks map { block => block.toStream }

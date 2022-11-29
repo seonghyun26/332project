@@ -63,6 +63,8 @@ class WorkerSuite extends AnyFunSuite {
     val d2 = new Block("./temp/output/p2")
     val d3 = new Block("./temp/output/p3")
 
-    Worker.merge(List(d1, d2, d3))
+    val blocks = Worker.merge(List(d1, d2, d3))
+    val block = blocks(0)
+
   }
 }

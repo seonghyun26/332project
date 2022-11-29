@@ -50,18 +50,31 @@ trait Sortable[T <: Comparable[T]] {
   }
 
   def mergeStream(streamList: List[Stream[T]]): Stream[T] = {
+    if(streamList.isEmpty) Stream.empty
+    else {
+      assert {streamList forall {stream => (!stream.isEmpty)} }
+      val frontList: List[T] = streamList map { stream => stream.head }
+      val minIdx = findMinIdx(frontList)
 
-    val frontList: List[T] = streamList map { stream => stream.head }
-    val minIdx = findMinIdx(frontList)
+      assert {
+        frontList.forall( value => frontList(minIdx) <= value )
+      }
 
-    val newStreamList = streamList.zipWithIndex map {
-      case (stream, idx) => if (idx == minIdx) stream.tail else stream
+      val newStreamList = 
+        for {
+          (stream, idx) <- streamList.zipWithIndex
+          if (idx != minIdx || !stream.tail.isEmpty)
+        } yield {
+          if (idx == minIdx) stream.tail
+          else stream
+        }
+
+      frontList(minIdx) #:: mergeStream(newStreamList)
     }
-
-    frontList(minIdx) #:: mergeStream(newStreamList)
   }
 
   def findMinIdx(list: List[T]): Int = {
+    require { !list.isEmpty }
     list.indexOf(sort(list)(0))
   }
 }
