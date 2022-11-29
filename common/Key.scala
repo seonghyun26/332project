@@ -17,7 +17,6 @@ object Key extends Sortable[Key]{
           }
     idx
   }
-
 }
 
 class Key(val value: List[Byte]) extends Comparable[Key]{
