@@ -32,49 +32,67 @@ trait Comparable[T <: Comparable[T]] {
   }
 }
 
-trait Sortable[T <: Comparable[T]] {
-  def sortCheck(list: List[T]): Boolean = {
-    if (list.isEmpty || list.tail.isEmpty) {
-      true
+object Comparable {
+  implicit class ListT[T <: Comparable[T]](list: List[T]){
+    def sortCheck(): Boolean = {
+      if (list.isEmpty || list.tail.isEmpty) {
+        true
+      }
+      else if (list.head <= list.tail.head) {
+        list.tail.sortCheck()
+      }
+      else {
+        false
+      }
     }
-    else if (list.head <= list.tail.head) {
-      sortCheck(list.tail)
+
+    def sort: List[T] = {
+      list.sortWith((a,b)=> a<b)
     }
-    else {
-      false
+
+    def minIdx: Int = {
+      require { !list.isEmpty }
+      list.indexOf(sort(0))
     }
-  }
 
-  def sort(list: List[T]): List[T] = {
-    list.sortWith((a,b)=> a<b)
-  }
-
-  def mergeStream(streamList: List[Stream[T]]): Stream[T] = {
-    if(streamList.isEmpty) Stream.empty
-    else {
-      assert {streamList forall {stream => (!stream.isEmpty)} }
-      val frontList: List[T] = streamList map { stream => stream.head }
-      val minIdx = findMinIdx(frontList)
-
-      assert {
-        frontList.forall( value => frontList(minIdx) <= value )
+    def getRangeIdx(value: T): Int = {
+      val idx = (list.indexWhere{p => value < p}) match {
+        case -1 => list.length
+        case idx => idx
       }
 
-      val newStreamList = 
-        for {
-          (stream, idx) <- streamList.zipWithIndex
-          if (idx != minIdx || !stream.tail.isEmpty)
-        } yield {
-          if (idx == minIdx) stream.tail
-          else stream
-        }
-
-      frontList(minIdx) #:: mergeStream(newStreamList)
+      assert { idx >= 0 && idx <= list.length }
+      assert { 
+            !(idx != 0 && idx != list.length) ||
+            (list(idx-1) <= value && value < list(idx)) 
+            }
+      idx
     }
   }
 
-  def findMinIdx(list: List[T]): Int = {
-    require { !list.isEmpty }
-    list.indexOf(sort(list)(0))
+  implicit class ListStreamT[T<: Comparable[T]](streamList: List[Stream[T]]) {
+    def mergedStream: Stream[T] = {
+      if(streamList.isEmpty) Stream.empty
+      else {
+        assert {streamList forall {stream => (!stream.isEmpty)} }
+        val frontList: List[T] = streamList map { stream => stream.head }
+        val minIdx = frontList.minIdx
+
+        assert {
+          frontList.forall( value => frontList(minIdx) <= value )
+        }
+
+        val newStreamList: List[Stream[T]] = 
+          for {
+            (stream, idx) <- streamList.zipWithIndex
+            if (idx != minIdx || !stream.tail.isEmpty)
+          } yield {
+            if (idx == minIdx) stream.tail
+            else stream
+          }
+
+        frontList(minIdx) #:: newStreamList.mergedStream
+      }
+    }
   }
 }

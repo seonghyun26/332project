@@ -1,22 +1,8 @@
 
 package common
 
-object Key extends Sortable[Key]{
+object Key{
   def apply(byte: List[Byte]): Key = new Key(byte)
-
-  def getRangeIdx(keyRange: List[Key])(value: Key): Int = {
-    val idx = (keyRange.indexWhere{p => value < p}) match {
-      case -1 => keyRange.length
-      case idx => idx
-    }
-
-    assert { idx >= 0 && idx <= keyRange.length }
-    assert { 
-          !(idx != 0 && idx != keyRange.length) ||
-          (keyRange(idx-1) <= value && value < keyRange(idx)) 
-          }
-    idx
-  }
 }
 
 class Key(val value: List[Byte]) extends Comparable[Key]{

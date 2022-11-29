@@ -8,7 +8,6 @@ import java.lang.IllegalArgumentException
 import java.io._
 import common._
 
-
 object Block {
   def maxSize = 360000
 
@@ -17,21 +16,15 @@ object Block {
     partition: List[Key]
     ): Map[Int, List[Tuple]] = {
 
-    def getPartitionIdxOf(value: Key) = Key.getRangeIdx(partition)(value)
+    def getPartitionIdxOf(value: Key) = partition.getRangeIdx(value)
+
     tuples groupBy {t => getPartitionIdxOf(t.key)}
   }
 
-  def saveOne(path: String, tuples: List[Tuple]): Block = {
+  def fromTuples(path: String, tuples: List[Tuple]): Block = {
     require(tuples.length <= maxSize)
 
-    // Save the tuples to path
-    val byteList = tuples.foldRight(List[Byte]()){
-      (tuple: Tuple, acc: List[Byte]) => tuple.toBytes ++ acc
-    }
-
-    assert {byteList.take(10) == tuples(0).key.value}
-
-    writeBytes(byteList.toStream, new File(path))
+    writeBytes(tuples.toBytes, new File(path))
 
     new Block(path)
   }
@@ -42,7 +35,7 @@ object Block {
       if (tuples.isEmpty) List()
       else {
         val (frontTuples, left) = tuples splitAt maxSize
-        saveOne(tempDir + "/" + idx, frontTuples.toList) :: rec(left, idx + 1)
+        fromTuples(tempDir + "/" + idx, frontTuples.toList) :: rec(left, idx + 1)
       }
     }
 
@@ -53,17 +46,24 @@ object Block {
 
 class Block(filepath: String){
 
-  require { new File(filepath).exists() }
+  val file = new File(filepath)
+
+  require { file.exists() }
 
   val fileName: String = filepath.split("/").last
   val dir: String = filepath.split("/").dropRight(1).mkString("/")
 
+  def fileSize = file.length.toInt
+
+  require { fileSize < Block.maxSize && fileSize % 100 == 0 }
+
+  val numTuples: Int = fileSize / 100
+
   var tempDir: Option[String] = None
   var partitionIdx: Option[Int] = None
 
-  var numTuples: Option[Int] = None
-
   def setTempDir(path: String): Unit = { tempDir = Some(path) }
+  def setPartitionIdx(idx: Int) = { partitionIdx = Some(idx) }
 
   def toStream: Stream[Tuple] = {
     val source = Source.fromFile(filepath, "ISO8859-1")
@@ -71,21 +71,19 @@ class Block(filepath: String){
     def stream: Stream[Tuple] = {
       if(!source.hasNext) Stream.empty
       else {
-        val byte_list = source.take(100).toList.map {_.toByte}
-        Tuple.fromBytes(byte_list) #:: stream
+        val byteList = source.take(100).toList.map {_.toByte}
+        Tuple.fromBytes(byteList) #:: stream
       }
     }
     stream
   }
 
   def toList: List[Tuple] = {
-    val list = toStream.toList
-    numTuples = Some(list.length)
-    list
+    toStream.toList
   }
 
   def sorted: List[Tuple] = {
-    toList.sortWith{(a: Tuple, b: Tuple) => a < b}
+    toList.sort
   }
 
   def sample(sample_size: Int): List[Tuple] = {
@@ -116,16 +114,15 @@ class Block(filepath: String){
       // Each tuple list are smaller than original,
       // so it can be saved into one block.
 
-      val block = Block.saveOne(dir + "/" + idx, tuples)
-      block.partitionIdx = Option(idx)
-      block.numTuples = Option(tuples.length)
+      val block = Block.fromTuples(dir + "/" + idx, tuples)
 
+      block.setPartitionIdx(idx)
       block
     }
     ).toList
   }
 
   def sortThenSaveTo(dst: String): Block = {
-    Block.saveOne(dst, sorted)
+    Block.fromTuples(dst, sorted)
   }
 }
