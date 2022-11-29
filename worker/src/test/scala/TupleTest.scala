@@ -5,7 +5,7 @@ import org.scalatest.funsuite.AnyFunSuite
 import scala.io.Source
 
 import worker.Tuple
-import test.Partition.loadPartition
+import test.util._
 
 
 class TupleSuite extends AnyFunSuite {
@@ -43,7 +43,6 @@ class TupleSuite extends AnyFunSuite {
     test("Tuple Comparison Test 2") {
 
         val byteList1: List[Byte] = (1 to 100).toList.map {_.toByte}
-
         assert(!(Tuple(byteList1) < Tuple(byteList1)))
 
     }

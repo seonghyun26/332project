@@ -6,7 +6,7 @@ import scala.io.Source
 
 import worker.Tuple
 import worker.Block
-import test.Partition.loadPartition
+import test.util._
 
 
 class BlockSuite extends AnyFunSuite {
@@ -44,7 +44,12 @@ class BlockSuite extends AnyFunSuite {
     val sample = block1.sample(9) map {t => t.key}
     block1.tempDir = Some("./temp/block1")
 
-    println(block1.divideByPartition(sample))
-    assert(true)
+    val blocks = block1.divideByPartition(sample)
+
+    for { block <- blocks } yield 
+    {
+      val partitionIdx = block.partitionIdx match { case Some(i) => i }
+      sample(partitionIdx)
+    }
   }
 }
