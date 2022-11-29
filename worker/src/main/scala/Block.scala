@@ -35,7 +35,7 @@ object Block {
       if (tuples.isEmpty) List()
       else {
         val (frontTuples, left) = tuples splitAt maxSize
-        fromTuples(tempDir + "/" + idx, frontTuples.toList) :: rec(left, idx + 1)
+        fromTuples(tempDir + idx, frontTuples.toList) :: rec(left, idx + 1)
       }
     }
 
@@ -62,7 +62,11 @@ class Block(filepath: String){
   var tempDir: Option[String] = None
   var partitionIdx: Option[Int] = None
 
-  def setTempDir(path: String): Unit = { tempDir = Some(path) }
+  def setTempDir(path: String): Unit = { 
+    require { path.endsWith("/") }
+    tempDir = Some(path)
+  }
+
   def setPartitionIdx(idx: Int) = { partitionIdx = Some(idx) }
 
   def toStream: Stream[Tuple] = {
