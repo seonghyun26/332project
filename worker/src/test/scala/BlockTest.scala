@@ -42,6 +42,8 @@ class BlockSuite extends AnyFunSuite {
 
   test("Partition Division Test 2") {
     val sample = block1.sample(9) map {t => t.key}
+    val partitionNum = 10
+
     block1.tempDir = Some("./temp/block1")
 
     val blocks = block1.divideByPartition(sample)
@@ -49,7 +51,15 @@ class BlockSuite extends AnyFunSuite {
     for { block <- blocks } yield 
     {
       val partitionIdx = block.partitionIdx match { case Some(i) => i }
-      sample(partitionIdx)
+
+      val start = if (partitionIdx == 0) None else Some(sample(partitionIdx-1))
+      val end = if (partitionIdx == partitionNum - 1) None else Some(sample(partitionIdx))
+
+      assert {
+        block.toList forall {
+          tuple => tuple.key inRange(start, end)
+        }
+      }
     }
   }
 }

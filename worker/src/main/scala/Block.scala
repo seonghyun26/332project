@@ -113,10 +113,8 @@ class Block(filepath: String){
     (
     for { (idx, tuples) <- partitioned  }
     yield {
-
       // Each tuple list are smaller than original,
       // so it can be saved into one block.
-
 
       val block = Block.saveOne(dir + "/" + idx, tuples)
       block.partitionIdx = Option(idx)
