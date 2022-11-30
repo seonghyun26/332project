@@ -6,9 +6,9 @@ import java.io.IOException;
 import java.util.concurrent.TimeUnit;
 import java.util.logging.Logger;
 import java.time.LocalDateTime;
+import java.util.concurrent.locks.ReentrantReadWriteLock
 
-import scala.concurrent.{ExecutionContext, Future, Promise}
-// import java.util.concurrent.atomic.AtomicInteger
+import scala.concurrent.{ExecutionContext, Future}
 import com.google.protobuf.ByteString
 
 
@@ -18,8 +18,6 @@ import protos.distsort.{
   ReadyReply,
   KeyRangeRequest,
   KeyRangeReply,
-  PartitionRequest,
-  PartitionReply,
   SortFinishRequest,
   SortFinishReply
 }
@@ -35,7 +33,7 @@ object DistSortServer {
     server.blockUntilShutdown()
   }
 
-  private val port = 50058
+  private val port = 50059
 }
 
 class DistSortServer(executionContext: ExecutionContext) { self =>
@@ -71,42 +69,33 @@ class DistSortServer(executionContext: ExecutionContext) { self =>
     private[this] val logger = Logger.getLogger(classOf[DistSortClient].getName)
 
     private var workerNumbers: Int = 2;
-    private var readyCnt:Int = 0;
-    private var keyRangeCnt:Int = 0;
-
-    // private val promise = Promise[Unit]
-    // private val counter = new AtomicInteger(0)
-
-    // val result: Future[Unit] = promise.future
-
-    // override def onNext(v: KeyRangeReply): Unit = {
-    // }
-
-    // override def onError(throwable: Throwable): Unit = {
-    //   val _ = promise.tryFailure(throwable)
-    // }
-
-    // override def onCompleted(): Unit = {
-    //   val _ = promise.tryFailure(new RuntimeException("no more completions"))
-    // }
+    private var readyCnt: Int = 0;
+    private var readyLock = new ReentrantReadWriteLock()
+    private var keyRangeCnt: Int = 0;
+    private var keyRangeLock = new ReentrantReadWriteLock()
+    private var sortFinishCnt: Int = 0;
+    private var sortFinishLock = new ReentrantReadWriteLock()
 
     override def workerReady(req: ReadyRequest) = {
-      println("Received " + req.workerName + " ready request")
-      readyCnt = readyCnt + 1;
+      println("Received ready request from " + req.workerName)
+      readyLock.writeLock().lock()
+      try { readyCnt += 1 }
+      finally { readyLock.writeLock().unlock() }
 
       while(readyCnt < workerNumbers){
         Thread.sleep(1000)
-        println(LocalDateTime.now() + "," + readyCnt)
+        println(LocalDateTime.now() + ", ready request received: " + readyCnt);
       }
 
-      val message = getReadyMessage()
       val reply = ReadyReply()
       Future.successful(reply)
     }
 
     override def keyRange(req: KeyRangeRequest, responseObserver: StreamObserver[KeyRangeReply] ): Unit = {
       println("Received KeyRange request")
-      keyRangeCnt = keyRangeCnt + 1;
+      keyRangeLock.writeLock().lock()
+      try { keyRangeCnt += 1 }
+      finally { keyRangeLock.writeLock().unlock() }
 
       val populationSize = req.populationSize;
       val numSamples = req.numSamples;
@@ -117,36 +106,41 @@ class DistSortServer(executionContext: ExecutionContext) { self =>
         println(LocalDateTime.now() + ", keyRange request received: " + keyRangeCnt);
       }
 
-      // var sampleString  = List[String]();
-      // samples.foreach( s => {sampleString = sampleString:::s.toString("UTF-8")})
       val sampleString = samples.foldRight(List[String]()){ (x, acc) => x.toString("UTF-8")::acc}
       println("Reveived '" + sampleString + " (" + numSamples + " samples)' from worker");
 
-      val testLowerBound:ByteString = ByteString.copyFromUtf8("a");
-      val testUpperBound:ByteString = ByteString.copyFromUtf8("z");
+      val testLowerBound: ByteString = ByteString.copyFromUtf8("a");
+      val testUpperBound: ByteString = ByteString.copyFromUtf8("z");
       val testworkerIpAddress : List[String]= List("localhost1", "localhost2");
 
       try {
         testworkerIpAddress.foreach(
-          ipaddress => responseObserver.onNext(KeyRangeReply(
-            lowerBound = testLowerBound,
-            upperBound = testUpperBound,
-            workerIpAddress = ipaddress
-          ))
+          ipaddress => responseObserver.onNext(
+            KeyRangeReply(
+              lowerBound = testLowerBound,
+              upperBound = testUpperBound,
+              workerIpAddress = ipaddress
+            )
+          )
         )
       } catch {
         case e: InterruptedException =>
-          logger.info("RPC failed in server")
+          logger.info("RPC failed in server in keyRange")
       }
       responseObserver.onCompleted();
     }
 
-    override def partition(req: PartitionRequest) = {
-      val reply = PartitionReply()
-      Future.successful(reply)
-    }
-
     override def sortFinish(req: SortFinishRequest) = {
+      println("Received sortFinish request")
+      sortFinishLock.writeLock().lock()
+      try { sortFinishCnt += 1 }
+      finally { sortFinishLock.writeLock().unlock() }
+
+      while(sortFinishCnt < workerNumbers){
+        Thread.sleep(1000);
+        println(LocalDateTime.now() + ", sortFinish request received: " + sortFinishCnt);
+      }
+
       val reply = SortFinishReply()
       Future.successful(reply)
     }
