@@ -7,13 +7,14 @@ service Distsort {
   // Server-Side Streaming for Key Range
   rpc KeyRange (KeyRangeRequest) returns (stream KeyRangeReply) {}
   
-  rpc Partition (PartitionRequest) returns (PartitionReply) {}
+  // rpc Partition (PartitionRequest) returns (PartitionReply) {}
 
   rpc SortFinish (SortFinishRequest) returns (SortFinishReply) {}
 }
 
 message ReadyRequest {
   string workerName = 1;
+  string workerIpAddress = 2;
 }
 
 message ReadyReply {}
@@ -30,9 +31,13 @@ message KeyRangeReply {
   string workerIpAddress = 3;
 }
 
-message PartitionRequest {}
+// message PartitionRequest {
+//   string workerIpAddress = 1;
+// }
 
-message PartitionReply {}
+// message PartitionReply {
+//   repeated bytes data = 1;
+// }
 
 message SortFinishRequest {}
 
