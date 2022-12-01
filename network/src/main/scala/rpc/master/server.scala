@@ -59,10 +59,9 @@ abstract class DistSortServer(port: Int, executionContext: ExecutionContext) {
   def handleReadyRequest(workerName: String, workerIpAddress: String): Unit
 
   def handleKeyRangeRequest(
-      populationSize: Int,
       numSamples: Int,
-      samples: Iterable[Iterable[Byte]],
-    ): (String, (List[Byte], List[Byte]))
+      samples: List[Array[Byte]],
+    ): (List[Array[Byte]], List[String])
 
   def handlePartitionRequest(): Unit
 
@@ -83,8 +82,10 @@ abstract class DistSortServer(port: Int, executionContext: ExecutionContext) {
       val numSamples = req.numSamples;
       val samples = req.samples;
 
-      val sampleString = samples.foldRight(List[Array[Byte]]()){ (x, acc) => x.toByteArray::acc}
       logger.info("Reveived " + numSamples + " samples from worker");
+      val sampleString = samples.foldRight(List[Array[Byte]]()){ (x, acc) => x.toByteArray::acc}
+      val (keyList_, workerIpAddressList) = handleKeyRangeRequest(numSamples, sampleString)
+      val keyList = for (key <- keyList_) yield ByteString.copyFrom(key)
 
       val reply = KeyRangeReply(
         keyList = List(),
