@@ -25,26 +25,13 @@ import protos.distsortMaster.{
   SortFinishReply
 }
 
-object DistSortServer {
-  private val logger = Logger.getLogger(classOf[DistSortServer].getName)
-
-  // NOTE: main code where server starts
-  def main(args: Array[String]): Unit = {
-    val server = new DistSortServer(ExecutionContext.global)
-    server.start()
-    server.blockUntilShutdown()
-  }
-
-  private val port = 50060
-}
-
-class DistSortServer(executionContext: ExecutionContext) {
+abstract class DistSortServer(port: Int, executionContext: ExecutionContext) {
   private val logger = Logger.getLogger(classOf[DistSortServer].getName)
   private var server: Server = null
 
   def start(): Unit = {
-    server = ServerBuilder.forPort(DistSortServer.port).addService(DistsortMasterGrpc.bindService(new DistsortMasterImpl, executionContext)).build.start
-    DistSortServer.logger.info("Server started, listening on " + DistSortServer.port)
+    server = ServerBuilder.forPort(port).addService(DistsortMasterGrpc.bindService(new DistsortImpl, executionContext)).build.start
+    this.logger.info("Server started, listening on " + port)
     sys.addShutdownHook {
       logger.info("*** shutting down gRPC server since JVM is shutting down")
       this.stop()
@@ -69,89 +56,59 @@ class DistSortServer(executionContext: ExecutionContext) {
     }
   }
 
-  private class DistsortMasterImpl extends DistsortMasterGrpc.DistsortMaster {
-    private var workerNumbers: Int = 2;
-    private var readyCnt: Int = 0;
-    private var readyLock = new ReentrantReadWriteLock()
-    private var keyRangeCnt: Int = 0;
-    private var keyRangeLock = new ReentrantReadWriteLock()
-    private var sortFinishCnt: Int = 0;
-    private var sortFinishLock = new ReentrantReadWriteLock()
+  def handleReadyRequest(workerName: String, workerIpAddress: String): Unit
 
-    override def workerReady(req: ReadyRequest) = {
+  def handleKeyRangeRequest(
+      populationSize: Int,
+      numSamples: Int,
+      samples: Iterable[Iterable[Byte]],
+    ): (String, (List[Byte], List[Byte]))
+
+  def handlePartitionRequest(): Unit
+
+  def handleSortFinishRequest(): Unit
+
+  private class DistsortImpl extends DistsortMasterGrpc.DistsortMaster {
+    override def workerReady(req: ReadyRequest): Future[ReadyReply] = {
       logger.info("Received ready request from " + req.workerName)
-      readyLock.writeLock().lock()
-      try { readyCnt += 1 }
-      finally { readyLock.writeLock().unlock() }
 
-      while(readyCnt < workerNumbers){
-        Thread.sleep(1000)
-        logger.info(LocalDateTime.now() + ", ready request received: " + readyCnt);
-      }
-
+      val _ = handleReadyRequest(req.workerName, req.workerIpAddress)
       val reply = ReadyReply()
       Future.successful(reply)
     }
 
-    override def keyRange(req: KeyRangeRequest) = {
+    override def keyRange(req: KeyRangeRequest): Future[KeyRangeReply] = {
       logger.info("Received KeyRange request")
-      keyRangeLock.writeLock().lock()
-      try { keyRangeCnt += 1 }
-      finally { keyRangeLock.writeLock().unlock() }
 
       val numSamples = req.numSamples;
       val samples = req.samples;
 
-      while(keyRangeCnt < workerNumbers){
-        Thread.sleep(1000);
-        logger.info(LocalDateTime.now() + ", keyRange request received: " + keyRangeCnt);
-      }
-
       val sampleString = samples.foldRight(List[Array[Byte]]()){ (x, acc) => x.toByteArray::acc}
-      logger.info("Reveived '" + sampleString + " (" + numSamples + " samples)' from worker");
-      // Master Algorithm
-      val testKeyList: List[ByteString] = List(
-        ByteString.copyFrom("a".getBytes),
-        ByteString.copyFrom("d".getBytes),
-        ByteString.copyFrom("j".getBytes)
-      )
-      val testworkerIpList : List[String]= List(
-        "localhost1",
-        "localhost2",
-        "localhost3",
-        "localhost4"
-      );
+      logger.info("Reveived " + numSamples + " samples from worker");
 
       val reply = KeyRangeReply(
-        keyList = testKeyList,
-        workerIpList = testworkerIpList
+        keyList = List(),
+        workerIpList = List(),
       )
       Future.successful(reply)
     }
 
-    override def partitionComplete(req: PartitionCompleteRequest) = {
-      // Todo: Implement
-      val reply = PartitionCompleteReply()
-      Future.successful(reply)
-    }
-
-    override def exchangeComplete(req: ExchangeCompleteRequest) = {
-      // Todo: Implement
+    override def exchangeComplete(request: ExchangeCompleteRequest): Future[ExchangeCompleteReply] = {
+      // Todo: implement this
       val reply = ExchangeCompleteReply()
       Future.successful(reply)
     }
 
-    override def sortFinish(req: SortFinishRequest) = {
+    override def partitionComplete(request: PartitionCompleteRequest): Future[PartitionCompleteReply] = {
+      // Todo: implement this
+      val reply = PartitionCompleteReply()
+      Future.successful(reply)
+    }
+
+    override def sortFinish(req: SortFinishRequest): Future[SortFinishReply] = {
       logger.info("Received sortFinish request")
-      sortFinishLock.writeLock().lock()
-      try { sortFinishCnt += 1 }
-      finally { sortFinishLock.writeLock().unlock() }
 
-      while(sortFinishCnt < workerNumbers){
-        Thread.sleep(1000);
-        logger.info(LocalDateTime.now() + ", sortFinish request received: " + sortFinishCnt);
-      }
-
+      val _ = handleSortFinishRequest()
       val reply = SortFinishReply()
       Future.successful(reply)
     }
