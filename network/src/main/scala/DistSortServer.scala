@@ -66,7 +66,7 @@ class DistSortServer(executionContext: ExecutionContext) { self =>
   }
 
   private class DistsortImpl extends DistsortGrpc.Distsort {
-    private[this] val logger = Logger.getLogger(classOf[DistSortClient].getName)
+    private[this] val logger = Logger.getLogger(classOf[DistSortServer].getName)
 
     private var workerNumbers: Int = 2;
     private var readyCnt: Int = 0;
