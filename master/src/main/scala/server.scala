@@ -26,9 +26,8 @@ object DistSortServerImpl {
   }
 }
 
-class DistSortServerImpl(port: Int, numWorkers: Int,
-  connectedWorkers: Promise[List[String]],
-) extends DistSortServer(ExecutionContext.global) {
+class DistSortServerImpl(port: Int, numWorkers: Int, connectedWorkers: Promise[List[String]])
+extends DistSortServer(port, ExecutionContext.global) {
   private val readyRequestLatch = new CountDownLatch(numWorkers)
   private val keyRangeRequestLatch = new CountDownLatch(numWorkers)
   private val partitionRequestLatch = new CountDownLatch(numWorkers)
@@ -37,7 +36,7 @@ class DistSortServerImpl(port: Int, numWorkers: Int,
   private val syncShutdown = new SyncVar[Int]
   syncShutdown.put(numWorkers)
 
-  def handleReadyRequest(workerName: String) = {
+  def handleReadyRequest(workerName: String, workerIpAddress: String) = {
     readyRequestLatch.countDown()
     readyRequestLatch.await()
   }
