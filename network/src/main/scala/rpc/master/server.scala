@@ -38,16 +38,17 @@ object DistSortServer {
   private val port = 50060
 }
 
-class DistSortServer(executionContext: ExecutionContext) { self =>
-  private[this] var server: Server = null
+class DistSortServer(executionContext: ExecutionContext) {
+  private val logger = Logger.getLogger(classOf[DistSortServer].getName)
+  private var server: Server = null
 
   def start(): Unit = {
     server = ServerBuilder.forPort(DistSortServer.port).addService(DistsortMasterGrpc.bindService(new DistsortMasterImpl, executionContext)).build.start
     DistSortServer.logger.info("Server started, listening on " + DistSortServer.port)
     sys.addShutdownHook {
-      System.err.println("*** shutting down gRPC server since JVM is shutting down")
-      self.stop()
-      System.err.println("*** server shut down")
+      logger.info("*** shutting down gRPC server since JVM is shutting down")
+      this.stop()
+      logger.info("*** server shut down")
     }
   }
 
@@ -69,8 +70,6 @@ class DistSortServer(executionContext: ExecutionContext) { self =>
   }
 
   private class DistsortMasterImpl extends DistsortMasterGrpc.DistsortMaster {
-    private[this] val logger = Logger.getLogger(classOf[DistSortServer].getName)
-
     private var workerNumbers: Int = 2;
     private var readyCnt: Int = 0;
     private var readyLock = new ReentrantReadWriteLock()
@@ -80,14 +79,14 @@ class DistSortServer(executionContext: ExecutionContext) { self =>
     private var sortFinishLock = new ReentrantReadWriteLock()
 
     override def workerReady(req: ReadyRequest) = {
-      println("Received ready request from " + req.workerName)
+      logger.info("Received ready request from " + req.workerName)
       readyLock.writeLock().lock()
       try { readyCnt += 1 }
       finally { readyLock.writeLock().unlock() }
 
       while(readyCnt < workerNumbers){
         Thread.sleep(1000)
-        println(LocalDateTime.now() + ", ready request received: " + readyCnt);
+        logger.info(LocalDateTime.now() + ", ready request received: " + readyCnt);
       }
 
       val reply = ReadyReply()
@@ -95,7 +94,7 @@ class DistSortServer(executionContext: ExecutionContext) { self =>
     }
 
     override def keyRange(req: KeyRangeRequest) = {
-      println("Received KeyRange request")
+      logger.info("Received KeyRange request")
       keyRangeLock.writeLock().lock()
       try { keyRangeCnt += 1 }
       finally { keyRangeLock.writeLock().unlock() }
@@ -105,11 +104,11 @@ class DistSortServer(executionContext: ExecutionContext) { self =>
 
       while(keyRangeCnt < workerNumbers){
         Thread.sleep(1000);
-        println(LocalDateTime.now() + ", keyRange request received: " + keyRangeCnt);
+        logger.info(LocalDateTime.now() + ", keyRange request received: " + keyRangeCnt);
       }
 
       val sampleString = samples.foldRight(List[Array[Byte]]()){ (x, acc) => x.toByteArray::acc}
-      println("Reveived '" + sampleString + " (" + numSamples + " samples)' from worker");
+      logger.info("Reveived '" + sampleString + " (" + numSamples + " samples)' from worker");
       // Master Algorithm
       val testKeyList: List[ByteString] = List(
         ByteString.copyFrom("a".getBytes),
@@ -143,14 +142,14 @@ class DistSortServer(executionContext: ExecutionContext) { self =>
     }
 
     override def sortFinish(req: SortFinishRequest) = {
-      println("Received sortFinish request")
+      logger.info("Received sortFinish request")
       sortFinishLock.writeLock().lock()
       try { sortFinishCnt += 1 }
       finally { sortFinishLock.writeLock().unlock() }
 
       while(sortFinishCnt < workerNumbers){
         Thread.sleep(1000);
-        println(LocalDateTime.now() + ", sortFinish request received: " + sortFinishCnt);
+        logger.info(LocalDateTime.now() + ", sortFinish request received: " + sortFinishCnt);
       }
 
       val reply = SortFinishReply()
