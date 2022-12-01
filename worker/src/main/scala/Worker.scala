@@ -3,6 +3,7 @@ package worker
 
 
 import sys.process._
+import scala.util.Random
 
 
 object Worker {
@@ -35,9 +36,21 @@ object Worker {
   }
 
   def sampleFromBlocks(blockList: List[Block], sampleSize: Int): List[Tuple] = {
-    ???
-  }
+    val rand = new Random()
 
+    val sampleLocation = (1 to sampleSize).map { _ => rand.nextInt(blockList.length) }
+
+    val localSampleSize = for { i <- 0 to blockList.length } yield
+    {
+      sampleLocation.count(_==i)
+    }
+
+    val sample = (localSampleSize zip blockList) flatMap { 
+      case (size: Int, block: Block) => block.sample(size)
+    }
+
+    sample.toList
+  }
 
   def merge(blocks: List[Block]): List[Block] = {
     val streamList: List[Stream[Tuple]] = blocks map { block => block.toStream }
