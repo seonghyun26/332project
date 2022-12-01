@@ -33,7 +33,7 @@ object DistSortServer {
     server.blockUntilShutdown()
   }
 
-  private val port = 50059
+  private val port = 50052
 }
 
 class DistSortServer(executionContext: ExecutionContext) { self =>
@@ -91,7 +91,7 @@ class DistSortServer(executionContext: ExecutionContext) { self =>
       Future.successful(reply)
     }
 
-    override def keyRange(req: KeyRangeRequest, responseObserver: StreamObserver[KeyRangeReply] ): Unit = {
+    override def keyRange(req: KeyRangeRequest) = {
       println("Received KeyRange request")
       keyRangeLock.writeLock().lock()
       try { keyRangeCnt += 1 }
@@ -106,28 +106,26 @@ class DistSortServer(executionContext: ExecutionContext) { self =>
         println(LocalDateTime.now() + ", keyRange request received: " + keyRangeCnt);
       }
 
-      val sampleString = samples.foldRight(List[String]()){ (x, acc) => x.toString("UTF-8")::acc}
+      val sampleString = samples.foldRight(List[Array[Byte]]()){ (x, acc) => x.toByteArray::acc}
       println("Reveived '" + sampleString + " (" + numSamples + " samples)' from worker");
+      // Master Algorithm
+      val testKeyList: List[ByteString] = List(
+        ByteString.copyFrom("a".getBytes),
+        ByteString.copyFrom("d".getBytes),
+        ByteString.copyFrom("j".getBytes)
+      )
+      val testWorkerIpAddressList : List[String]= List(
+        "localhost1",
+        "localhost2",
+        "localhost3",
+        "localhost4"
+      );
 
-      val testLowerBound: ByteString = ByteString.copyFromUtf8("a");
-      val testUpperBound: ByteString = ByteString.copyFromUtf8("z");
-      val testworkerIpAddress : List[String]= List("localhost1", "localhost2");
-
-      try {
-        testworkerIpAddress.foreach(
-          ipaddress => responseObserver.onNext(
-            KeyRangeReply(
-              lowerBound = testLowerBound,
-              upperBound = testUpperBound,
-              workerIpAddress = ipaddress
-            )
-          )
-        )
-      } catch {
-        case e: InterruptedException =>
-          logger.info("RPC failed in server in keyRange")
-      }
-      responseObserver.onCompleted();
+      val reply = KeyRangeReply(
+        keyList = testKeyList,
+        workerIpAddressList = testWorkerIpAddressList
+      )
+      Future.successful(reply)
     }
 
     override def sortFinish(req: SortFinishRequest) = {

@@ -26,17 +26,17 @@ object DistSortClient {
 
   def main(args: Array[String]): Unit = {
     val host: String = "localhost"
-    val port: Int = 50059
+    val port: Int = 50052
     
     val client = DistSortClient(host, port)
     val workerName: String = "Worker" + args.headOption.getOrElse("")
     val workerIpAddress: String = "localhost"
 
     val samples: List[ByteString] = List(
-      ByteString.copyFromUtf8("b"),
-      ByteString.copyFromUtf8("c"),
-      ByteString.copyFromUtf8("e"),
-      ByteString.copyFromUtf8("t")
+      ByteString.copyFrom("b".getBytes),
+      ByteString.copyFrom("c".getBytes),
+      ByteString.copyFrom("e".getBytes),
+      ByteString.copyFrom("t".getBytes)
     )
 
     //NOTE: What client does
@@ -47,10 +47,11 @@ object DistSortClient {
         println("Sync Point 1 passed\n")
       }
 
-      var syncPointTwo = client.sendKeyRange(workerName, 10, 4, samples)
-      if (syncPointTwo) {
-        println("Sync Point 2 passed\n")
-      }
+      val (keyList, workerIpList) = client.sendKeyRange(workerName, 10, 4, samples)
+      val keyListInString = keyList.map(_.toByteArray.map(_.toChar).mkString)
+      println(keyListInString)
+      println(workerIpList)
+      println("Sync Point 2 passed\n")
 
       // var syncPointThree = client.sendPartition()
       // if (syncPointTwo) {
@@ -96,7 +97,8 @@ class DistSortClient private(
     return true
   }
 
-  def sendKeyRange(workerName: String, populationSize: Int, numSamples: Int, samples: List[ByteString]): Boolean = {
+
+  def sendKeyRange(workerName: String, populationSize: Int, numSamples: Int, samples: List[ByteString]): (List[ByteString], List[String]) = {
     logger.info(workerName + " sending key range")
     val request = KeyRangeRequest( 
       populationSize = populationSize,
@@ -105,20 +107,19 @@ class DistSortClient private(
     )
 
     try {
-      val responses = blockingStub.keyRange(request)
-      for(reply <- responses){
-        println(" >> Master: Key range at '" + reply.workerIpAddress + "'" + ": " + reply.lowerBound.toString("UTF-8") + ", " + reply.upperBound.toString("UTF-8"))
-      }
+      val response = blockingStub.keyRange(request)
+      println(" >> Master: Sent key range to workers!")
+      return (response.keyList.toList, response.workerIpAddressList.toList)
     } catch {
       case e: StatusRuntimeException =>
         logger.info("RPC failed in client keyRange")
-        return false
     }
 
-    return true
+    return (List(), List())
   }
 
-  def sendPartition(workerName: String): Boolean = {
+  def sendPartition(workerName: String, data: Iterable[Byte]): Boolean = {
+    // TODO: convert byte to bytestring and send
     logger.info(workerName + " sending partition")
     return true
   }
