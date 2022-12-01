@@ -8,6 +8,8 @@ object Key{
 class Key(val value: List[Byte]) extends Comparable[Key]{
   def length = value.length
 
+  def asBytes = value.toArray
+
   override def <(other: Key): Boolean = {
     require(length == other.length)
 
