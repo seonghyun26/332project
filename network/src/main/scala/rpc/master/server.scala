@@ -51,13 +51,18 @@ class DistSortServer(executionContext: ExecutionContext) { self =>
     }
   }
 
-  private def stop(): Unit = {
+  def getListenAddress(): String = {
+    val socket = server.getListenSockets().get(0)
+    socket.toString()
+  }
+
+  def stop(): Unit = {
     if (server != null) {
       server.shutdown()
     }
   }
 
-  private def blockUntilShutdown(): Unit = {
+  def blockUntilShutdown(): Unit = {
     if (server != null) {
       server.awaitTermination()
     }
