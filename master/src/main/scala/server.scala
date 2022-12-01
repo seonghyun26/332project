@@ -1,4 +1,4 @@
-import network.distsort.server.DistSortServer
+import network.rpc.master.server.DistSortServer
 import scala.concurrent.ExecutionContext
 import java.util.concurrent.CountDownLatch
 import scala.concurrent.{Promise, SyncVar}
