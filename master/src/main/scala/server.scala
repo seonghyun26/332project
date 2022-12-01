@@ -2,6 +2,7 @@ package master.server
 
 import network.rpc.master.server.DistSortServer
 import scala.concurrent.{ExecutionContext, Promise}
+import java.net.InetAddress
 import java.util.concurrent.CountDownLatch
 import scala.concurrent.{Promise, SyncVar, Future, Await}
 import scala.concurrent.duration.Duration
@@ -20,7 +21,8 @@ object DistSortServerImpl {
     val connectedWorkers = Promise[List[String]]
     val server = new DistSortServerImpl(port, numWorkers, connectedWorkers)
     server.start()
-    println(server.getListenAddress())
+    val localIpAddress = InetAddress.getLocalHost.getHostAddress
+    println(localIpAddress)
     connectedWorkers.future.foreach(printConnectedWorkers)
     server.blockUntilShutdown()
   }
@@ -28,6 +30,7 @@ object DistSortServerImpl {
 
 class DistSortServerImpl(port: Int, numWorkers: Int, connectedWorkers: Promise[List[String]])
 extends DistSortServer(port, ExecutionContext.global) {
+  private val master = new Master(numWorkers)
   private val readyRequestLatch = new CountDownLatch(numWorkers)
   private val keyRangeRequestLatch = new CountDownLatch(numWorkers)
   private val partitionRequestLatch = new CountDownLatch(numWorkers)
@@ -38,18 +41,19 @@ extends DistSortServer(port, ExecutionContext.global) {
 
   def handleReadyRequest(workerName: String, workerIpAddress: String) = {
     readyRequestLatch.countDown()
+    syncConnectedWorkers.put(workerIpAddress :: syncConnectedWorkers.take)
     readyRequestLatch.await()
+    connectedWorkers.trySuccess(syncConnectedWorkers.get)
   }
 
   def handleKeyRangeRequest(
-      populationSize: Int,
-      numSamples: Int,
-      samples: Iterable[Iterable[Byte]],
-    ): (String, (List[Byte], List[Byte])) = {
-    val allKeyRanges = Master.divideKeyRange(populationSize, numSamples, samples)
+    numSamples: Int,
+    samples: List[Array[Byte]],
+  ): (List[Array[Byte]], List[String]) = {
+    val keyRangeResult = master.divideKeyRange(numSamples, samples)
     keyRangeRequestLatch.countDown()
     keyRangeRequestLatch.await()
-    Await.result(allKeyRanges, Duration.Inf)
+    keyRangeResult.get
   }
 
   def handlePartitionRequest() = {
