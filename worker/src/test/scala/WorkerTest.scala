@@ -35,9 +35,9 @@ class WorkerSuite extends AnyFunSuite {
     val b3 = new Block("./temp/input/p3")
 
     assert {
-      b1.sorted.sortCheck() &&
-      b2.sorted.sortCheck() &&
-      b3.sorted.sortCheck()
+      b1.sorted.isSorted &&
+      b2.sorted.isSorted &&
+      b3.sorted.isSorted
     }
   }
 
@@ -51,9 +51,9 @@ class WorkerSuite extends AnyFunSuite {
     val d3 = b3.sortThenSaveTo("./temp/output/p3")
 
     assert { 
-      d1.toList.sortCheck() &&
-      d2.toList.sortCheck() &&
-      d3.toList.sortCheck()
+      d1.toList.isSorted &&
+      d2.toList.isSorted &&
+      d3.toList.isSorted
     }
   }
 

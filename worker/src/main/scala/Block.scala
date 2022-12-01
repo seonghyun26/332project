@@ -90,10 +90,10 @@ class Block(filepath: String){
     toList.sort
   }
 
-  def sample(sample_size: Int): List[Tuple] = {
+  def sample(sampleSize: Int): List[Tuple] = {
     val rand = new Random()
     val population = toList
-    val sampleIdx = (1 to sample_size).map{ _ => rand.nextInt(population.length) }
+    val sampleIdx = (1 to sampleSize).map{ _ => rand.nextInt(population.length) }
     sampleIdx.map { idx => population(idx) }.toList
   }
 

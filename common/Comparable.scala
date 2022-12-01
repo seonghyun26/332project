@@ -34,12 +34,12 @@ trait Comparable[T <: Comparable[T]] {
 
 object Comparable {
   implicit class ListT[T <: Comparable[T]](list: List[T]){
-    def sortCheck(): Boolean = {
+    def isSorted: Boolean = {
       if (list.isEmpty || list.tail.isEmpty) {
         true
       }
       else if (list.head <= list.tail.head) {
-        list.tail.sortCheck()
+        list.tail.isSorted
       }
       else {
         false

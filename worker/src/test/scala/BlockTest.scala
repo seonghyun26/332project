@@ -20,7 +20,7 @@ class BlockSuite extends AnyFunSuite {
   }
 
   test("Block Sort Test") {
-    assert(block1.sorted.sortCheck())
+    assert(block1.sorted.isSorted)
   }
 
   test("Block Sample Test") {
