@@ -41,7 +41,7 @@ object DistSortServer {
 class DistSortServer(executionContext: ExecutionContext) { self =>
   private[this] var server: Server = null
 
-  private def start(): Unit = {
+  def start(): Unit = {
     server = ServerBuilder.forPort(DistSortServer.port).addService(DistsortMasterGrpc.bindService(new DistsortMasterImpl, executionContext)).build.start
     DistSortServer.logger.info("Server started, listening on " + DistSortServer.port)
     sys.addShutdownHook {

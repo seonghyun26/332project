@@ -1,22 +1,16 @@
 package master
 
-class Key(protected val key: Int) {
-  def <(that: Key): Boolean = key < that.key
-  def ==(that: Key): Boolean = key == that.key
-}
-
-object Key {
-  val MAX: Key = new Key(Int.MaxValue)
-  val MIN: Key = new Key(Int.MinValue)
-}
+import scala.concurrent.{ExecutionContext, Future}
 
 object Master {
+  private implicit val ec = ExecutionContext.global
+
   def divideKeyRange(
     populationSize: Int,
     numSamples: Int,
     samples: Iterable[Iterable[Byte]],
-    ): (String, (List[Byte], List[Byte])) = {
-    ("", (List(), List()))
+    ): Future[(String, (List[Byte], List[Byte]))] = {
+    Future {("", (List(), List()))}
   }
 }
 
