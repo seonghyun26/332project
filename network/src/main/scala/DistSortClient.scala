@@ -41,7 +41,7 @@ object DistSortClient {
     //NOTE: What client does
     try {
       
-      var syncPointOne = client.sendReadySignal(workerName, workerIpAddress)
+      var syncPointOne = client.sendReadySignal(workerName)
       if (syncPointOne) {
         println("Sync Point 1 passed\n")
       }
@@ -79,9 +79,9 @@ class DistSortClient private(
     channel.shutdown.awaitTermination(5, TimeUnit.SECONDS)
   }
 
-  def sendReadySignal(workerName: String, workerIpAddress: String): Boolean = {
+  def sendReadySignal(workerName: String): Boolean = {
     logger.info(workerName + " is ready")
-    val request = ReadyRequest(workerName = workerName, workerIpAddress = workerIpAddress)
+    val request = ReadyRequest(workerName = workerName)
 
     try {
       val response = blockingStub.workerReady(request)
@@ -97,10 +97,9 @@ class DistSortClient private(
   }
 
 
-  def sendKeyRange(workerName: String, populationSize: Int, numSamples: Int, samples: List[ByteString]): (List[ByteString], List[String]) = {
+  def sendKeyRange(workerName: String, numSamples: Int, samples: List[ByteString]): (List[ByteString], List[String]) = {
     logger.info(workerName + " sending key range")
     val request = KeyRangeRequest( 
-      populationSize = populationSize,
       numSamples = numSamples,
       samples = samples
     )

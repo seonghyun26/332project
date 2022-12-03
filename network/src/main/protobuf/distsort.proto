@@ -14,15 +14,13 @@ service Distsort {
 
 message ReadyRequest {
   string workerName = 1;
-  string workerIpAddress = 2;
 }
 
 message ReadyReply {}
 
 message KeyRangeRequest {
-  int32 populationSize = 1;
-  int32 numSamples = 2;
-  repeated bytes samples = 3;
+  int32 numSamples = 1;
+  repeated bytes samples = 2;
 }
 
 message KeyRangeReply {
