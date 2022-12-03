@@ -57,22 +57,4 @@ class WorkerSuite extends AnyFunSuite {
     }
   }
 
-  test("Worker Merge Test") {
-
-    val d1 = new Block("./temp/output/p1")
-    val d2 = new Block("./temp/output/p2")
-    val d3 = new Block("./temp/output/p3")
-
-    val blocks = Worker.merge(List(d1, d2, d3))
-    val block = blocks(0)
-
-  }
-
-  test("Worker Sample Test") {
-    val d1 = new Block("./temp/output/p1")
-    val d2 = new Block("./temp/output/p2")
-    val d3 = new Block("./temp/output/p3")
-
-    val sample = Worker.sampleFromBlocks(List(d1, d2, d3), 100)
-  }
 }
