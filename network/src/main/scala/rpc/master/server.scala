@@ -1,4 +1,4 @@
-package network.distsort.server
+package network.rpc.master.server
 
 import io.grpc.{Server, ServerBuilder};
 import io.grpc.stub.StreamObserver;
@@ -11,19 +11,15 @@ import java.util.concurrent.locks.ReentrantReadWriteLock
 import scala.concurrent.{ExecutionContext, Future}
 import com.google.protobuf.ByteString
 
-
-import protos.distsort.{
-  DistsortGrpc, 
+import protos.distsortMaster.{
+  DistsortMasterGrpc, 
   ReadyRequest,
   ReadyReply,
   KeyRangeRequest,
   KeyRangeReply,
-  PartitionRequest,
-  PartitionReply,
   SortFinishRequest,
   SortFinishReply
 }
-
 
 object DistSortServer {
   private val logger = Logger.getLogger(classOf[DistSortServer].getName)
@@ -42,7 +38,7 @@ class DistSortServer(executionContext: ExecutionContext) { self =>
   private[this] var server: Server = null
 
   private def start(): Unit = {
-    server = ServerBuilder.forPort(DistSortServer.port).addService(DistsortGrpc.bindService(new DistsortImpl, executionContext)).build.start
+    server = ServerBuilder.forPort(DistSortServer.port).addService(DistsortMasterGrpc.bindService(new DistsortMasterImpl, executionContext)).build.start
     DistSortServer.logger.info("Server started, listening on " + DistSortServer.port)
     sys.addShutdownHook {
       System.err.println("*** shutting down gRPC server since JVM is shutting down")
@@ -63,7 +59,7 @@ class DistSortServer(executionContext: ExecutionContext) { self =>
     }
   }
 
-  private class DistsortImpl extends DistsortGrpc.Distsort {
+  private class DistsortMasterImpl extends DistsortMasterGrpc.DistsortMaster {
     private[this] val logger = Logger.getLogger(classOf[DistSortServer].getName)
 
     private var workerNumbers: Int = 2;
@@ -125,11 +121,6 @@ class DistSortServer(executionContext: ExecutionContext) { self =>
       Future.successful(reply)
     }
 
-    override def partition(req: PartitionRequest) = {
-      val reply = PartitionReply()
-      Future.successful(reply)
-    }
-
     override def sortFinish(req: SortFinishRequest) = {
       println("Received sortFinish request")
       sortFinishLock.writeLock().lock()
@@ -145,5 +136,4 @@ class DistSortServer(executionContext: ExecutionContext) { self =>
       Future.successful(reply)
     }
   }
-
 }
