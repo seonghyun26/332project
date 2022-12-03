@@ -11,18 +11,7 @@ import common._
 import com.google.protobuf.ByteString
 
 
-trait PartitionHandler(val tempDir: String) {
-
-
-
-  def handlePartition(receivedData: List[ByteString]): Unit = {
-    val tuples = receivedData map { byte => Tuple(byte.toArray.toList) }
-    Block.fromTuples(tempDir + m, tuples)
-  }
-}
-
-
-class Worker(val inputDirs: List[String], val outputDir: String, val tempDir: Option[String]) {
+class Worker(val inputDirs: List[String], val outputDir: String) {
 
   val fileList = inputDirs flatMap {dir => getListOfFiles(dir)}
   val fileNameList = fileList map { file => file.getPath }
@@ -40,7 +29,6 @@ class Worker(val inputDirs: List[String], val outputDir: String, val tempDir: Op
   }
 
   def partition(blocks: List[Block], keyRange: List[Key]): List[Block] = {
-    (
     for {
       (block, blockId) <- blocks.zipWithIndex
       (workerIndex, tuples) <- block.divideByPartition(keyRange)
@@ -48,7 +36,6 @@ class Worker(val inputDirs: List[String], val outputDir: String, val tempDir: Op
       val newBlockPath = outputDir + s"/$blockId.$workerIndex"
       Block.fromTuples(newBlockPath, tuples)
     }
-    ).flatten
   }
 
   def initializeBlocks(fileNameList: List[String]): List[Block] = {

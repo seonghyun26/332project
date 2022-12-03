@@ -16,6 +16,10 @@ import protos.distsortMaster.{
   ReadyReply,
   KeyRangeRequest,
   KeyRangeReply,
+  PartitionCompleteRequest,
+  PartitionCompleteReply,
+  ExchangeCompleteRequest,
+  ExchangeCompleteReply,
   SortFinishRequest,
   SortFinishReply
 }
@@ -29,61 +33,6 @@ object DistSortClient {
     val blockingStubWorker = DistsortMasterGrpc.blockingStub(channelWorker)
     new DistSortClient(channel, blockingStub, List((channelWorker, blockingStubWorker)))
   }
-
-  // def main(args: Array[String]): Unit = {
-  //   val host: String = "localhost"
-  //   val port: Int = 50060
-    
-  //   val client = DistSortClient(host, port)
-  //   val workerName: String = "Worker" + args.headOption.getOrElse("")
-  //   val workerIpAddress: String = "localhost"
-
-  //   val samples: List[ByteString] = List(
-  //     ByteString.copyFrom("b".getBytes),
-  //     ByteString.copyFrom("c".getBytes),
-  //     ByteString.copyFrom("e".getBytes),
-  //     ByteString.copyFrom("t".getBytes)
-  //   )
-
-  //   val workerServer = new DistSortWorkerServer(ExecutionContext.global)
-    
-
-  //   //NOTE: What client does
-  //   try {
-  //     workerServer.start()
-      
-  //     var syncPointOne = client.sendReadySignal(workerName, workerIpAddress)
-  //     if (syncPointOne) {
-  //       println("Sync Point 1 passed\n")
-  //     }
-
-  //     val (keyList:List[ByteString], workerIpList) = client.sendKeyRange(workerName, 4, samples)
-  //     val keyListInString = keyList.map(_.toByteArray.map(_.toChar).mkString)
-  //     println(keyListInString)
-  //     println(workerIpList)
-  //     println("Sync Point 2 passed\n")
-
-  //     val testDestination: String = "localhost:" + "50072"
-  //     val syncPointThree = client.sendPartition(
-  //       workerName,
-  //       testDestination,
-  //       samples
-  //     )
-  //     if (syncPointThree) {
-  //       println("Sync Point 3 passed\n")
-  //     }
-
-  //     var syncPointFour = client.sendFinishSignal(workerName)
-  //     if (syncPointFour) {
-  //       println("Sync Point 4 passed\n")
-  //     }
-      
-  //   } finally {
-  //     println("Worker finished!")
-  //     client.shutdown()
-  //     workerServer.stop()
-  //   }
-  // }
 }
 
 class DistSortClient private(
@@ -133,6 +82,47 @@ class DistSortClient private(
     return (List(), List())
   }
 
+  def partitionComplete(workerName: String): Boolean = {
+    logger.info(workerName + " partitioning completed")
+
+    val request = PartitionCompleteRequest()
+
+    // NOTE: Find stub using sendToIp
+    // From stub, ip can be achieved by stublist(i)._2.authority()
+
+    try {
+      val response = blockingStub.partitionComplete(request)
+      println(" >> Master: All workers complete partitioning!")
+    } catch {
+      case e: StatusRuntimeException =>
+        logger.info("RPC failed in client partitionComplete")
+        return false
+    }
+
+    return true
+  }
+
+  def exchangeComplete(workerName: String): Boolean = {
+    logger.info(workerName + " exchange completed")
+
+    val request = ExchangeCompleteRequest()
+
+    // NOTE: Find stub using sendToIp
+    // From stub, ip can be achieved by stublist(i)._2.authority()
+
+    try {
+      val response = blockingStub.exchangeComplete(request)
+      println(" >> Master: All workers complete exchange!")
+    } catch {
+      case e: StatusRuntimeException =>
+        logger.info("RPC failed in client exchangeComplete")
+        return false
+    }
+
+    return true
+  }
+
+
   def sendFinishSignal(workerName: String): Boolean ={
     logger.info(workerName + " sending finish signal")
     val request = SortFinishRequest()
@@ -150,72 +140,3 @@ class DistSortClient private(
     return true
   }
 }
-
-// // NOTE: Test server object
-// object DistSortWorkerServer {
-//   private val logger = Logger.getLogger(classOf[DistSortWorkerServer].getName)
-
-//   // NOTE: main code where server starts
-//   def main(args: Array[String]): Unit = {
-//     val server = new DistSortWorkerServer(ExecutionContext.global)
-//     server.start()
-//     server.blockUntilShutdown()
-//   }
-
-//   private val port = 50071
-// }
-
-// class DistSortWorkerServer(executionContext: ExecutionContext) { self =>
-//   private[this] var server: Server = null
-//   private[this] var receivedDatas: List[ByteString] = List[ByteString]()
-//   private[this] var receivedDataNumber: Int = 0
-
-//   def start(): Unit = {
-//     server = ServerBuilder.forPort(DistSortWorkerServer.port).addService(DistsortMasterGrpc.bindService(new DistsortWorkerImpl, executionContext)).build.start
-//     DistSortWorkerServer.logger.info("Server started, listening on " + DistSortWorkerServer.port)
-//     sys.addShutdownHook {
-//       System.err.println("*** shutting down gRPC server since JVM is shutting down")
-//       self.stop()
-//       System.err.println("*** server shut down")
-//     }
-//   }
-
-//   def stop(): Unit = {
-//     if (server != null) {
-//       server.shutdown()
-//     }
-//   }
-
-//   def blockUntilShutdown(): Unit = {
-//     if (server != null) {
-//       server.awaitTermination()
-//     }
-//   }
-
-//   private class DistsortWorkerImpl extends DistsortMasterGrpc.DistsortMaster {
-//     private[this] val logger = Logger.getLogger(classOf[DistSortWorkerServer].getName)
-    
-//     override def workerReady(req: ReadyRequest) = {
-//       val reply = ReadyReply()
-//       Future.successful(reply)
-//     }
-//     override def keyRange(req: KeyRangeRequest) = {
-//       val reply = KeyRangeReply()
-//       Future.successful(reply)
-//     }
-//     override def sortFinish(req: SortFinishRequest) = {
-//       val reply = SortFinishReply()
-//       Future.successful(reply)
-//     }
-
-//     override def partition(req: PartitionRequest) = {
-//       val receiverIp = req.workerIpAddress;
-//       val receivedData = req.data.toList
-//       println("receivedData: " + receivedData)
-//       // NOTE: save receivedData in machine, receivedData: List[ByteString]
-
-//       val reply = PartitionReply(finish = true)
-//       Future.successful(reply)
-//     }
-//   }
-// }

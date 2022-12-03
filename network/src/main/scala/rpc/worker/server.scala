@@ -33,7 +33,7 @@ object DistSortServer {
 class DistSortServer(executionContext: ExecutionContext) { self =>
   private[this] var server: Server = null
 
-  private def start(): Unit = {
+  def start(): Unit = {
     server = ServerBuilder.forPort(DistSortServer.port).addService(DistsortWorkerGrpc.bindService(new DistsortImpl, executionContext)).build.start
     DistSortServer.logger.info("Server started, listening on " + DistSortServer.port)
     sys.addShutdownHook {
@@ -43,7 +43,7 @@ class DistSortServer(executionContext: ExecutionContext) { self =>
     }
   }
 
-  private def stop(): Unit = {
+  def stop(): Unit = {
     if (server != null) {
       server.shutdown()
     }
@@ -55,10 +55,20 @@ class DistSortServer(executionContext: ExecutionContext) { self =>
     }
   }
 
+  def handlePartition(receivedData: List[ByteString]): Unit = {
+    println(receivedData)
+  }
+
   private class DistsortImpl extends DistsortWorkerGrpc.DistsortWorker {
     private[this] val logger = Logger.getLogger(classOf[DistSortServer].getName)
 
     override def partition(req: PartitionRequest) = {
+      val receiverIp = req.workerIpAddress
+      val receivedData = req.data.toList
+
+      // NOTE : save receivedData in machine, receivedData: List[ByteString]
+      handlePartition(receivedData)
+
       val reply = PartitionReply()
       Future.successful(reply)
     }

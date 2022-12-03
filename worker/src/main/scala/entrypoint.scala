@@ -2,12 +2,18 @@
 package worker
 
 import sys.process._
+import java.io.File
 
 import common._
 
-import network.distsort.client._
+import network.rpc.master.client.{DistSortClient => Master}
+
+import network.rpc.worker.client.{DistSortClient => WorkerClient}
+import network.rpc.worker.server.{DistSortServer}
+
 import com.google.protobuf.ByteString
 import scala.concurrent.ExecutionContext
+import java.util.concurrent.locks.ReentrantReadWriteLock
 
 object Entrypoint {
 
@@ -15,18 +21,18 @@ object Entrypoint {
 
   def main(args: Array[String]): Unit = {
     val (masterHost, masterPort, inputDirs, outputDir) = parseArgs(args)
-    val client = DistSortClient(masterHost, masterPort)
+    val master = Master(masterHost, masterPort)
 
     // Initialize directory structure
-    initDirectoryStructure(outputDir)
+    val (partitionDir, receivedDir) = initDirectoryStructure(outputDir)
     val partitionWorker = new Worker(inputDirs, partitionDir)
     val blocks = partitionWorker.blocks
 
-    client.sendReadySignal(workerName, workerName)
+    master.sendReadySignal(workerName, workerName)
 
     // Sample from blocks and send them to master
     val sample = partitionWorker.sample(blocks)
-    val (bytes, workerIpList) = client.sendKeyRange(workerName, sample.length, sample)
+    val (bytes, workerIpList) = master.sendKeyRange(workerName, sample.length, sample)
 
     // Partition blocks by given key range
     val keyRange = bytes map { byte => Key(byte.toByteArray.toList) }
@@ -38,11 +44,12 @@ object Entrypoint {
     }
 
     // Start server for receiving blocks
-    val workerServer = new DistSortWorkerServer(ExecutionContext.global) with PartitionHandler(outputDir + "/recieved")
+    val workerClient = WorkerClient(masterHost, masterPort)
+    val workerServer = new WorkerServer(receivedDir)
     workerServer.start()
 
     // Send signal to master to sync.
-    client.partitionComplete(workerName)
+    master.partitionComplete(workerName)
 
     // Repeatedly send partitioned blocks to other workers
     for {
@@ -51,16 +58,18 @@ object Entrypoint {
     } yield {
       val destIP = workerIpList(workerIdx)
       val byteStringList = block.toList map { tuple => tuple.toByteString }
-      client.sendPartition(workerName, destIP, byteStringList)
+      workerClient.sendPartition(workerName, destIP, byteStringList)
     }
 
     // Send signal to master to sync.
-    client.exchangeComplete(workerName)
+    master.exchangeComplete(workerName)
     workerServer.stop()
 
-    val mergeWorker = new Worker(receivedDir, outputDir)
-    val recievedBlocks = List()
-    worker.merge(recievedBlocks)
+    val mergeWorker = new Worker(List(receivedDir), outputDir)
+    val recievedBlocks = mergeWorker.blocks
+    val mergedBlocks = mergeWorker.merge(recievedBlocks)
+
+    master.sendFinishSignal(workerName)
   }
 
   def parseArgs(args: Array[String]): (String, Int, List[String], String) = {
@@ -107,10 +116,34 @@ object Entrypoint {
     tempDir.mkdirs()
   }
 
-  def initDirectoryStructure(dir: String): Unit = {
-    val partitionDir = outputDir + "/partitioned"
-    val recievedDir = outputDir + "/received"
+  def initDirectoryStructure(dir: String): (String, String) = {
+    val partitionDir = dir + "/partitioned"
+    val receivedDir = dir + "/received"
     setUpTempDir(partitionDir)
-    setUpTempDir(recievedDir)
+    setUpTempDir(receivedDir)
+    (partitionDir, receivedDir)
   }
+}
+
+class WorkerServer(val saveDir: String) extends DistSortServer(ExecutionContext.global) {
+
+  // Thie variable needs to be modified due to possible race condition.
+  private val lock = new ReentrantReadWriteLock()
+  private val read = lock.readLock()
+  private val write = lock.writeLock()
+  private var idx = 0
+
+  override def handlePartition(receivedData: List[ByteString]): Unit = {
+    val tuples = receivedData map { byte => Tuple(byte.toByteArray.toList) }
+    var curIdx = 0
+
+    try {
+      write.lock()
+      curIdx = idx
+      idx = idx + 1
+    } finally write.unlock()
+
+    Block.fromTuples(saveDir + s"/$curIdx", tuples)
+  }
+
 }
