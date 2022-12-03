@@ -42,7 +42,7 @@ class Master(numWorkers: Int) {
     syncKeyRange
   }
 
-  // Executes only once.
+  // This is and should be executed only once.
   private def calculateKeyRange() = {
     val numSamples = syncNumSamples.take
     val samples = syncSamples.take
@@ -52,14 +52,14 @@ class Master(numWorkers: Int) {
     val sortedKeys = keys.sort
     assert(sortedKeys.isSorted)
 
+    val step = numSamples / numWorkers
     val keyRange = for {
-      i <- (0 until numWorkers).toList
-      step <- Some(numSamples / numWorkers)
-      index <- Some(i * step)
-    } yield sortedKeys(index).asBytes
+      i <- (0 until numWorkers by step).toList
+    } yield sortedKeys(i).asBytes
 
+    val minimumKey = Key(List.fill(10)(0.toByte)).asBytes
     val keyRangeResult = keyRange match {
-      case head::tail => List[Byte](0, 0, 0, 0, 0, 0, 0, 0, 0, 0).toArray :: tail
+      case head :: tail => minimumKey :: tail
       case Nil => Nil
     }
 
