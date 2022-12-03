@@ -35,7 +35,7 @@ object Block {
       if (tuples.isEmpty) List()
       else {
         val (frontTuples, left) = tuples splitAt maxSize
-        fromTuples(tempDir + idx, frontTuples.toList) :: rec(left, idx + 1)
+        fromTuples(tempDir + "/partition." + idx, frontTuples.toList) :: rec(left, idx + 1)
       }
     }
 
