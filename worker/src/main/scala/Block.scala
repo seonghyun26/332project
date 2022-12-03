@@ -59,13 +59,7 @@ class Block(filepath: String){
 
   val numTuples: Int = fileSize / 100
 
-  var tempDir: Option[String] = None
   var partitionIdx: Option[Int] = None
-
-  def setTempDir(path: String): Unit = { 
-    require { path.endsWith("/") }
-    tempDir = Some(path)
-  }
 
   def setPartitionIdx(idx: Int) = { partitionIdx = Some(idx) }
 
@@ -97,35 +91,16 @@ class Block(filepath: String){
     sampleIdx.map { idx => population(idx) }.toList
   }
 
-  def divideByPartition(partition: List[Key]): List[Block] = {
-    require { tempDir != None }
-
-    val dir = tempDir match {
-      case Some(dir) => dir
-      case None => throw new IllegalArgumentException("Temporary directory must be set.")
-    }
-
-    require { (new File(dir)).exists() }
-
-    val numPartition = partition.length + 1
-
-    val partitioned = Block.divideTuplesByPartition(toList, partition)
-
-    (
-    for { (idx, tuples) <- partitioned  }
-    yield {
-      // Each tuple list are smaller than original,
-      // so it can be saved into one block.
-
-      val block = Block.fromTuples(dir + "/" + idx, tuples)
-
-      block.setPartitionIdx(idx)
-      block
-    }
-    ).toList
+  def divideByPartition(partition: List[Key]): Map[Int, List[Tuple]] = {
+    Block.divideTuplesByPartition(toList, partition)
   }
 
   def sortThenSaveTo(dst: String): Block = {
     Block.fromTuples(dst, sorted)
+  }
+
+  def sortThenSave: Unit = {
+    val sortedTuples = sorted
+    writeBytes(sortedTuples.toBytes, file)
   }
 }

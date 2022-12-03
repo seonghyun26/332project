@@ -1,36 +1,65 @@
 
 package worker
 
+import sys.process._
+
 import common._
 
-import network.distsort.client.DistSortClient
+import network.distsort.client._
 import com.google.protobuf.ByteString
-
+import scala.concurrent.ExecutionContext
 
 object Entrypoint {
 
+  val workerName = "332"
+
   def main(args: Array[String]): Unit = {
     val (masterHost, masterPort, inputDirs, outputDir) = parseArgs(args)
-    val worker = new Worker(inputDirs, outputDir)
-    val workerName = "332"
     val client = DistSortClient(masterHost, masterPort)
 
-    val dataBlocks = worker.initialize
+    // Initialize directory structure
+    initDirectoryStructure(outputDir)
+    val partitionWorker = new Worker(inputDirs, partitionDir)
+    val blocks = partitionWorker.blocks
 
-    client.sendReadySignal(workerName)
-    
-    val sample = worker.sample(dataBlocks)
+    client.sendReadySignal(workerName, workerName)
 
-    val (bytes, workers) = client.sendKeyRange(workerName, sample.length, sample)
+    // Sample from blocks and send them to master
+    val sample = partitionWorker.sample(blocks)
+    val (bytes, workerIpList) = client.sendKeyRange(workerName, sample.length, sample)
 
+    // Partition blocks by given key range
     val keyRange = bytes map { byte => Key(byte.toByteArray.toList) }
+    val partitionedBlocks = partitionWorker.partition(blocks, keyRange)
 
-    val partitionedBlocks = worker.partition(dataBlocks, keyRange)
+    // Sort partitioned blocks
+    for (block <- partitionedBlocks) {
+      block.sortThenSave
+    }
 
-    // TODO: Send Partition to other workers
+    // Start server for receiving blocks
+    val workerServer = new DistSortWorkerServer(ExecutionContext.global) with PartitionHandler(outputDir + "/recieved")
+    workerServer.start()
 
+    // Send signal to master to sync.
+    client.partitionComplete(workerName)
+
+    // Repeatedly send partitioned blocks to other workers
+    for {
+      block <- partitionedBlocks
+      workerIdx <- block.partitionIdx
+    } yield {
+      val destIP = workerIpList(workerIdx)
+      val byteStringList = block.toList map { tuple => tuple.toByteString }
+      client.sendPartition(workerName, destIP, byteStringList)
+    }
+
+    // Send signal to master to sync.
+    client.exchangeComplete(workerName)
+    workerServer.stop()
+
+    val mergeWorker = new Worker(receivedDir, outputDir)
     val recievedBlocks = List()
-
     worker.merge(recievedBlocks)
   }
 
@@ -71,5 +100,17 @@ object Entrypoint {
     if (leftArgs.length > 1) throw new Exception("Too many Arguments")
 
     leftArgs(0)
+  }
+
+  def setUpTempDir(dir: String): Unit = {
+    val tempDir = new File(dir + "/temp")
+    tempDir.mkdirs()
+  }
+
+  def initDirectoryStructure(dir: String): Unit = {
+    val partitionDir = outputDir + "/partitioned"
+    val recievedDir = outputDir + "/received"
+    setUpTempDir(partitionDir)
+    setUpTempDir(recievedDir)
   }
 }
