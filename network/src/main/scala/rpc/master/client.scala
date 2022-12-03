@@ -20,71 +20,71 @@ import protos.distsortMaster.{
   SortFinishReply
 }
 
-// object DistSortClient {
-//   def apply(host: String, port: Int): DistSortClient = {
-//     val channel = ManagedChannelBuilder.forAddress(host, port).usePlaintext().build
-//     val blockingStub = DistsortMasterGrpc.blockingStub(channel)
-//     val ipWorker = "localhost"
-//     val channelWorker = ManagedChannelBuilder.forAddress(ipWorker, 50072).usePlaintext().build
-//     val blockingStubWorker = DistsortMasterGrpc.blockingStub(channelWorker)
-//     new DistSortClient(channel, blockingStub, List((channelWorker, blockingStubWorker)))
-//   }
+object DistSortClient {
+  def apply(host: String, port: Int): DistSortClient = {
+    val channel = ManagedChannelBuilder.forAddress(host, port).usePlaintext().build
+    val blockingStub = DistsortMasterGrpc.blockingStub(channel)
+    val ipWorker = "localhost"
+    val channelWorker = ManagedChannelBuilder.forAddress(ipWorker, 50072).usePlaintext().build
+    val blockingStubWorker = DistsortMasterGrpc.blockingStub(channelWorker)
+    new DistSortClient(channel, blockingStub, List((channelWorker, blockingStubWorker)))
+  }
 
-//   def main(args: Array[String]): Unit = {
-//     val host: String = "localhost"
-//     val port: Int = 50060
+  // def main(args: Array[String]): Unit = {
+  //   val host: String = "localhost"
+  //   val port: Int = 50060
     
-//     val client = DistSortClient(host, port)
-//     val workerName: String = "Worker" + args.headOption.getOrElse("")
-//     val workerIpAddress: String = "localhost"
+  //   val client = DistSortClient(host, port)
+  //   val workerName: String = "Worker" + args.headOption.getOrElse("")
+  //   val workerIpAddress: String = "localhost"
 
-//     val samples: List[ByteString] = List(
-//       ByteString.copyFrom("b".getBytes),
-//       ByteString.copyFrom("c".getBytes),
-//       ByteString.copyFrom("e".getBytes),
-//       ByteString.copyFrom("t".getBytes)
-//     )
+  //   val samples: List[ByteString] = List(
+  //     ByteString.copyFrom("b".getBytes),
+  //     ByteString.copyFrom("c".getBytes),
+  //     ByteString.copyFrom("e".getBytes),
+  //     ByteString.copyFrom("t".getBytes)
+  //   )
 
-//     val workerServer = new DistSortWorkerServer(ExecutionContext.global)
+  //   val workerServer = new DistSortWorkerServer(ExecutionContext.global)
     
 
-//     //NOTE: What client does
-//     try {
-//       workerServer.start()
+  //   //NOTE: What client does
+  //   try {
+  //     workerServer.start()
       
-//       var syncPointOne = client.sendReadySignal(workerName, workerIpAddress)
-//       if (syncPointOne) {
-//         println("Sync Point 1 passed\n")
-//       }
+  //     var syncPointOne = client.sendReadySignal(workerName, workerIpAddress)
+  //     if (syncPointOne) {
+  //       println("Sync Point 1 passed\n")
+  //     }
 
-//       val (keyList:List[ByteString], workerIpList) = client.sendKeyRange(workerName, 4, samples)
-//       val keyListInString = keyList.map(_.toByteArray.map(_.toChar).mkString)
-//       println(keyListInString)
-//       println(workerIpList)
-//       println("Sync Point 2 passed\n")
+  //     val (keyList:List[ByteString], workerIpList) = client.sendKeyRange(workerName, 4, samples)
+  //     val keyListInString = keyList.map(_.toByteArray.map(_.toChar).mkString)
+  //     println(keyListInString)
+  //     println(workerIpList)
+  //     println("Sync Point 2 passed\n")
 
-//       val testDestination: String = "localhost:" + "50072"
-//       val syncPointThree = client.sendPartition(
-//         workerName,
-//         testDestination,
-//         samples
-//       )
-//       if (syncPointThree) {
-//         println("Sync Point 3 passed\n")
-//       }
+  //     val testDestination: String = "localhost:" + "50072"
+  //     val syncPointThree = client.sendPartition(
+  //       workerName,
+  //       testDestination,
+  //       samples
+  //     )
+  //     if (syncPointThree) {
+  //       println("Sync Point 3 passed\n")
+  //     }
 
-//       var syncPointFour = client.sendFinishSignal(workerName)
-//       if (syncPointFour) {
-//         println("Sync Point 4 passed\n")
-//       }
+  //     var syncPointFour = client.sendFinishSignal(workerName)
+  //     if (syncPointFour) {
+  //       println("Sync Point 4 passed\n")
+  //     }
       
-//     } finally {
-//       println("Worker finished!")
-//       client.shutdown()
-//       workerServer.stop()
-//     }
-//   }
-// }
+  //   } finally {
+  //     println("Worker finished!")
+  //     client.shutdown()
+  //     workerServer.stop()
+  //   }
+  // }
+}
 
 class DistSortClient private(
   private val channel: ManagedChannel,
