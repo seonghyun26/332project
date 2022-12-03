@@ -105,8 +105,7 @@ class Block(filepath: String){
       case None => throw new IllegalArgumentException("Temporary directory must be set.")
     }
 
-    val file = new File(dir)
-    file.mkdir()
+    require { (new File(dir)).exists() }
 
     val numPartition = partition.length + 1
 

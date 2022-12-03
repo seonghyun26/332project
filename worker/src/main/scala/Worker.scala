@@ -4,14 +4,35 @@ package worker
 
 import sys.process._
 import scala.util.Random
+import java.io.File
+
+import common._
+
+import com.google.protobuf.ByteString
 
 
-object Worker {
+class Worker(val inputDirs: List[String], val outputDir: String) {
 
-  val outputDir = "./temp/output"
+  val fileList = inputDirs flatMap {dir => getListOfFiles(dir)}
+  val fileNameList = fileList map { file => file.getPath }
 
-  def main(args: Array[String]): Unit = {
-    ???
+  def initialize: List[Block] = { 
+    initializeBlocks(fileNameList)
+  }
+
+  def sample(blocks: List[Block]): List[ByteString] = {
+    val numTotalTuples = blocks.foldLeft(0){ (acc, block) => acc + block.numTuples }
+    val sampleSize = if (numTotalTuples < 1000) numTotalTuples else 1000
+    val sample = sampleFromBlocks(blocks, sampleSize)
+
+    sample map { tuple => ByteString.copyFrom(tuple.toBytes.toArray) } 
+  }
+
+  def partition(blocks: List[Block], keyRange: List[Key]): List[Block] = {
+    val newBlokcs = for ( block <- blocks ) yield {
+      block.divideByPartition(keyRange)
+    }
+    newBlokcs.flatten
   }
 
   def initializeBlocks(fileNameList: List[String]): List[Block] = {
@@ -23,6 +44,9 @@ object Worker {
   }
 
   def setUpTempDirectory(blocks: List[Block]): Unit = {
+
+    s"mkdir $outputDir/temp" !
+
     blocks.zipWithIndex foreach {
       case (block, id) => {
 
