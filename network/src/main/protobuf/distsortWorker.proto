@@ -1,0 +1,16 @@
+syntax = "proto3";
+
+package protos;
+
+service DistsortWorker {
+  rpc Partition (PartitionRequest) returns (PartitionReply) {}
+}
+
+message PartitionRequest {
+  string workerIpAddress = 1;
+  repeated bytes data = 2;
+}
+
+message PartitionReply {
+  bool finish = 1;
+}

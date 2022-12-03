@@ -2,12 +2,11 @@ syntax = "proto3";
 
 package protos;
 
-service Distsort {
+service DistsortMaster {
   rpc WorkerReady (ReadyRequest) returns (ReadyReply) {}
+
   // Server-Side Streaming for Key Range
   rpc KeyRange (KeyRangeRequest) returns (KeyRangeReply) {}
-  
-  rpc Partition (PartitionRequest) returns (PartitionReply) {}
 
   rpc SortFinish (SortFinishRequest) returns (SortFinishReply) {}
 }
@@ -27,15 +26,6 @@ message KeyRangeRequest {
 message KeyRangeReply {
   repeated bytes keyList = 1;
   repeated string workerIpList = 2;
-}
-
-message PartitionRequest {
-  string workerIpAddress = 1;
-  repeated bytes data = 2;
-}
-
-message PartitionReply {
-  bool finish = 1;
 }
 
 message SortFinishRequest {}
