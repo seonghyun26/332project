@@ -11,12 +11,23 @@ import common._
 import com.google.protobuf.ByteString
 
 
-class Worker(val inputDirs: List[String], val outputDir: String) {
+trait PartitionHandler(val tempDir: String) {
+
+
+
+  def handlePartition(receivedData: List[ByteString]): Unit = {
+    val tuples = receivedData map { byte => Tuple(byte.toArray.toList) }
+    Block.fromTuples(tempDir + m, tuples)
+  }
+}
+
+
+class Worker(val inputDirs: List[String], val outputDir: String, val tempDir: Option[String]) {
 
   val fileList = inputDirs flatMap {dir => getListOfFiles(dir)}
   val fileNameList = fileList map { file => file.getPath }
 
-  def initialize: List[Block] = { 
+  def blocks: List[Block] = { 
     initializeBlocks(fileNameList)
   }
 
@@ -25,38 +36,25 @@ class Worker(val inputDirs: List[String], val outputDir: String) {
     val sampleSize = if (numTotalTuples < 1000) numTotalTuples else 1000
     val sample = sampleFromBlocks(blocks, sampleSize)
 
-    sample map { tuple => ByteString.copyFrom(tuple.toBytes.toArray) } 
+    sample map { tuple => tuple.toByteString } 
   }
 
   def partition(blocks: List[Block], keyRange: List[Key]): List[Block] = {
-    val newBlokcs = for ( block <- blocks ) yield {
-      block.divideByPartition(keyRange)
+    (
+    for {
+      (block, blockId) <- blocks.zipWithIndex
+      (workerIndex, tuples) <- block.divideByPartition(keyRange)
+    } yield {
+      val newBlockPath = outputDir + s"/$blockId.$workerIndex"
+      Block.fromTuples(newBlockPath, tuples)
     }
-    newBlokcs.flatten
+    ).flatten
   }
 
   def initializeBlocks(fileNameList: List[String]): List[Block] = {
     val blocks = fileNameList map { fileName:String => new Block(fileName) }
 
-    setUpTempDirectory(blocks)
-
     blocks
-  }
-
-  def setUpTempDirectory(blocks: List[Block]): Unit = {
-
-    s"mkdir $outputDir/temp" !
-
-    blocks.zipWithIndex foreach {
-      case (block, id) => {
-
-        val tempDir = s"$outputDir/temp/$id/"
-
-        s"mkdir $tempDir" !
-
-        block.setTempDir(tempDir)
-      }
-    }
   }
 
   def sampleFromBlocks(blockList: List[Block], sampleSize: Int): List[Tuple] = {

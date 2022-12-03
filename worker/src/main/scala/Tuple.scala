@@ -3,6 +3,8 @@ package worker
 import java.lang.IllegalArgumentException
 import scala.math.BigInt
 
+import com.google.protobuf.ByteString
+
 import common._
 
 
@@ -48,6 +50,10 @@ class Tuple(key_ :List[Byte], value_ :List[Byte]) extends Comparable[Tuple] {
 
   override def toString(): String = {
     "KEY | %s".format(byteListToString(key.value))
+  }
+
+  def toByteString: ByteString = {
+    ByteString.copyFrom(toBytes.toArray)
   }
 
   override def <(other: Tuple): Boolean = key < other.key
