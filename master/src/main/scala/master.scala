@@ -3,21 +3,19 @@ package master
 import java.util.concurrent.CountDownLatch
 import scala.concurrent.{ExecutionContext, Future, SyncVar, Promise}
 import common.Key
+import util.sync.{SyncAccInt, SyncAccList}
 
 class Master(numWorkers: Int) {
   type Bytes = Array[Byte]
   private implicit val ec = ExecutionContext.global
 
-  private val syncNumSamples = new SyncVar[Int]
-  private val syncSamples = new SyncVar[List[Bytes]]
+  private val syncNumSamples = new SyncAccInt(0)
+  private val syncSamples = new SyncAccList[Bytes](List())
 
-  private val remainingRequests = new SyncVar[Int]
-  remainingRequests.put(numWorkers)
+  private val remainingRequests = new CountDownLatch(numWorkers)
   private val calculationTrigger = Promise[Unit]
   calculationTrigger.future.foreach(_ => calculateKeyRange())
-
   private val syncKeyRange = new SyncVar[(List[Array[Byte]], List[String])]
-
   private var workerIpAddressList: Option[List[String]] = None
 
   def setWorkerIpAddressList(workerIpAddressList: List[String]) = {
@@ -33,12 +31,12 @@ class Master(numWorkers: Int) {
     for (sample <- samples) assert(sample.length == 10)
     assert(samples.size == numSamples)
 
-    syncNumSamples.put(numSamples + syncNumSamples.get)
-    syncSamples.put(samples ++ syncSamples.get)
-    remainingRequests.take match {
-      case 1 => calculationTrigger.success(())
-      case n => remainingRequests.put(n - 1)
-    }
+    syncNumSamples.accumulate(numSamples)
+    syncSamples.accumulate(samples)
+    remainingRequests.countDown()
+    remainingRequests.await()
+
+    calculationTrigger.trySuccess(())
     syncKeyRange
   }
 
