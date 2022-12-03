@@ -46,7 +46,7 @@ object DistSortClient {
         println("Sync Point 1 passed\n")
       }
 
-      val (keyList, workerIpList) = client.sendKeyRange(workerName, 10, 4, samples)
+      val (keyList:List[ByteString], workerIpList) = client.sendKeyRange(workerName, 4, samples)
       val keyListInString = keyList.map(_.toByteArray.map(_.toChar).mkString)
       println(keyListInString)
       println(workerIpList)
