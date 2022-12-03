@@ -17,6 +17,10 @@ import protos.distsortMaster.{
   ReadyReply,
   KeyRangeRequest,
   KeyRangeReply,
+  PartitionCompleteRequest,
+  PartitionCompleteReply,
+  ExchangeCompleteRequest,
+  ExchangeCompleteReply,
   SortFinishRequest,
   SortFinishReply
 }
@@ -118,6 +122,18 @@ class DistSortServer(executionContext: ExecutionContext) { self =>
         keyList = testKeyList,
         workerIpList = testworkerIpList
       )
+      Future.successful(reply)
+    }
+
+    override def partitionComplete(req: PartitionCompleteRequest) = {
+      // Todo: Implement
+      val reply = PartitionCompleteReply()
+      Future.successful(reply)
+    }
+
+    override def exchangeComplete(req: ExchangeCompleteRequest) = {
+      // Todo: Implement
+      val reply = ExchangeCompleteReply()
       Future.successful(reply)
     }
 

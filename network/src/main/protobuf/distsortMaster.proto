@@ -8,6 +8,10 @@ service DistsortMaster {
   // Server-Side Streaming for Key Range
   rpc KeyRange (KeyRangeRequest) returns (KeyRangeReply) {}
 
+  rpc PartitionComplete (PartitionCompleteRequest) returns (PartitionCompleteReply) {}
+
+  rpc ExchangeComplete (ExchangeCompleteRequest) returns (ExchangeCompleteReply) {}
+
   rpc SortFinish (SortFinishRequest) returns (SortFinishReply) {}
 }
 
@@ -28,6 +32,11 @@ message KeyRangeReply {
   repeated string workerIpList = 2;
 }
 
-message SortFinishRequest {}
+message PartitionCompleteRequest {}
+message PartitionCompleteReply {}
 
+message ExchangeCompleteRequest {}
+message ExchangeCompleteReply {}
+
+message SortFinishRequest {}
 message SortFinishReply {}
