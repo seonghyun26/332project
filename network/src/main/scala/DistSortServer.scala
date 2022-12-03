@@ -18,6 +18,8 @@ import protos.distsort.{
   ReadyReply,
   KeyRangeRequest,
   KeyRangeReply,
+  PartitionRequest,
+  PartitionReply,
   SortFinishRequest,
   SortFinishReply
 }
@@ -33,7 +35,7 @@ object DistSortServer {
     server.blockUntilShutdown()
   }
 
-  private val port = 50052
+  private val port = 50060
 }
 
 class DistSortServer(executionContext: ExecutionContext) { self =>
@@ -59,10 +61,6 @@ class DistSortServer(executionContext: ExecutionContext) { self =>
     if (server != null) {
       server.awaitTermination()
     }
-  }
-
-  def getReadyMessage(): String = {
-    "All Workers ready"
   }
 
   private class DistsortImpl extends DistsortGrpc.Distsort {
@@ -113,7 +111,7 @@ class DistSortServer(executionContext: ExecutionContext) { self =>
         ByteString.copyFrom("d".getBytes),
         ByteString.copyFrom("j".getBytes)
       )
-      val testWorkerIpAddressList : List[String]= List(
+      val testworkerIpList : List[String]= List(
         "localhost1",
         "localhost2",
         "localhost3",
@@ -122,8 +120,13 @@ class DistSortServer(executionContext: ExecutionContext) { self =>
 
       val reply = KeyRangeReply(
         keyList = testKeyList,
-        workerIpAddressList = testWorkerIpAddressList
+        workerIpList = testworkerIpList
       )
+      Future.successful(reply)
+    }
+
+    override def partition(req: PartitionRequest) = {
+      val reply = PartitionReply()
       Future.successful(reply)
     }
 

@@ -5,14 +5,21 @@ import java.util.logging.{Level, Logger};
 import java.util.concurrent.TimeUnit;
 import java.time.LocalDateTime;
 import java.util.Iterator;
+import io.grpc.{Server, ServerBuilder};
+import scala.concurrent.{ExecutionContext, Future}
 
 import com.google.protobuf.ByteString
 
 import protos.distsort.{
   DistsortGrpc, 
   ReadyRequest,
+  ReadyReply,
   KeyRangeRequest,
+  KeyRangeReply,
+  PartitionRequest,
+  PartitionReply,
   SortFinishRequest,
+  SortFinishReply
 }
 
 
@@ -20,12 +27,15 @@ object DistSortClient {
   def apply(host: String, port: Int): DistSortClient = {
     val channel = ManagedChannelBuilder.forAddress(host, port).usePlaintext().build
     val blockingStub = DistsortGrpc.blockingStub(channel)
-    new DistSortClient(channel, blockingStub)
+    val ipWorker = "localhost"
+    val channelWorker = ManagedChannelBuilder.forAddress(ipWorker, 50072).usePlaintext().build
+    val blockingStubWorker = DistsortGrpc.blockingStub(channelWorker)
+    new DistSortClient(channel, blockingStub, List((channelWorker, blockingStubWorker)))
   }
 
   def main(args: Array[String]): Unit = {
     val host: String = "localhost"
-    val port: Int = 50052
+    val port: Int = 50060
     
     val client = DistSortClient(host, port)
     val workerName: String = "Worker" + args.headOption.getOrElse("")
@@ -38,10 +48,14 @@ object DistSortClient {
       ByteString.copyFrom("t".getBytes)
     )
 
+    val workerServer = new DistSortWorkerServer(ExecutionContext.global)
+    
+
     //NOTE: What client does
     try {
+      workerServer.start()
       
-      var syncPointOne = client.sendReadySignal(workerName)
+      var syncPointOne = client.sendReadySignal(workerName, workerIpAddress)
       if (syncPointOne) {
         println("Sync Point 1 passed\n")
       }
@@ -52,10 +66,15 @@ object DistSortClient {
       println(workerIpList)
       println("Sync Point 2 passed\n")
 
-      // var syncPointThree = client.sendPartition()
-      // if (syncPointTwo) {
-      //   println("Sync Point 3 passed\n")
-      // }
+      val testDestination: String = "localhost:" + "50072"
+      val syncPointThree = client.sendPartition(
+        workerName,
+        testDestination,
+        samples
+      )
+      if (syncPointThree) {
+        println("Sync Point 3 passed\n")
+      }
 
       var syncPointFour = client.sendFinishSignal(workerName)
       if (syncPointFour) {
@@ -65,13 +84,15 @@ object DistSortClient {
     } finally {
       println("Worker finished!")
       client.shutdown()
+      workerServer.stop()
     }
   }
 }
 
 class DistSortClient private(
   private val channel: ManagedChannel,
-  private val blockingStub: DistsortGrpc.DistsortBlockingStub
+  private val blockingStub: DistsortGrpc.DistsortBlockingStub,
+  private val stubList: List[(ManagedChannel, DistsortGrpc.DistsortBlockingStub)] 
 ) {
   private[this] val logger = Logger.getLogger(classOf[DistSortClient].getName)
 
@@ -79,9 +100,9 @@ class DistSortClient private(
     channel.shutdown.awaitTermination(5, TimeUnit.SECONDS)
   }
 
-  def sendReadySignal(workerName: String): Boolean = {
+  def sendReadySignal(workerName: String, workerIpAddress: String): Boolean = {
     logger.info(workerName + " is ready")
-    val request = ReadyRequest(workerName = workerName)
+    val request = ReadyRequest(workerName = workerName, workerIpAddress = workerIpAddress)
 
     try {
       val response = blockingStub.workerReady(request)
@@ -107,7 +128,7 @@ class DistSortClient private(
     try {
       val response = blockingStub.keyRange(request)
       println(" >> Master: Sent key range to workers!")
-      return (response.keyList.toList, response.workerIpAddressList.toList)
+      return (response.keyList.toList, response.workerIpList.toList)
     } catch {
       case e: StatusRuntimeException =>
         logger.info("RPC failed in client keyRange")
@@ -116,10 +137,31 @@ class DistSortClient private(
     return (List(), List())
   }
 
-  def sendPartition(workerName: String, data: Iterable[Byte]): Boolean = {
-    // TODO: convert byte to bytestring and send
+  def sendPartition(workerName: String, sendToIp: String, data: List[ByteString]): Boolean = {
     logger.info(workerName + " sending partition")
-    return true
+
+    val request = PartitionRequest(
+      workerIpAddress = sendToIp,
+      data = data
+    )
+    // NOTE: Find stub using sendToIp
+    // From stub, ip can be achieved by stublist(i)._2.authority()
+    val stubFiltered = stubList.filter(_._1.authority() == sendToIp)
+    assert( stubFiltered != None)
+    val stub = stubFiltered(0)._2
+
+    try {
+      val response = stub.partition(request)
+      if (response.finish) {
+        println(" >> Master : Received partition from "+ sendToIp )
+        return true
+      }
+    } catch {
+      case e: StatusRuntimeException =>
+        logger.info("RPC failed in client sendPartition")
+    }
+
+    return false
   }
 
   def sendFinishSignal(workerName: String): Boolean ={
@@ -141,47 +183,72 @@ class DistSortClient private(
   
 }
 
+// NOTE: Test server object
+object DistSortWorkerServer {
+  private val logger = Logger.getLogger(classOf[DistSortWorkerServer].getName)
 
-// class DistSortWorkerServer(executionContext: ExecutionContext) { self =>
-//   private[this] var server: Server = null
+  // NOTE: main code where server starts
+  def main(args: Array[String]): Unit = {
+    val server = new DistSortWorkerServer(ExecutionContext.global)
+    server.start()
+    server.blockUntilShutdown()
+  }
 
-//   private def start(): Unit = {
-//     server = ServerBuilder.forPort(DistSortWorkerServer.port).addService(DistsortGrpc.bindService(new DistsorWorkertImpl, executionContext)).build.start
-//     DistSortWorkerServer.logger.info("Server started, listening on " + DistSortWorkerServer.port)
-//     sys.addShutdownHook {
-//       System.err.println("*** shutting down gRPC server since JVM is shutting down")
-//       self.stop()
-//       System.err.println("*** server shut down")
-//     }
-//   }
+  private val port = 50071
+}
 
-//   private def stop(): Unit = {
-//     if (server != null) {
-//       server.shutdown()
-//     }
-//   }
+class DistSortWorkerServer(executionContext: ExecutionContext) { self =>
+  private[this] var server: Server = null
+  private[this] var receivedDatas: List[ByteString] = List[ByteString]()
+  private[this] var receivedDataNumber: Int = 0
 
-//   private def blockUntilShutdown(): Unit = {
-//     if (server != null) {
-//       server.awaitTermination()
-//     }
-//   }
+  def start(): Unit = {
+    server = ServerBuilder.forPort(DistSortWorkerServer.port).addService(DistsortGrpc.bindService(new DistsortWorkerImpl, executionContext)).build.start
+    DistSortWorkerServer.logger.info("Server started, listening on " + DistSortWorkerServer.port)
+    sys.addShutdownHook {
+      System.err.println("*** shutting down gRPC server since JVM is shutting down")
+      self.stop()
+      System.err.println("*** server shut down")
+    }
+  }
 
-//   private class DistsorWorkertImpl extends DistsortGrpc.Distsort {
-//     private[this] val logger = Logger.getLogger(classOf[DistSortClient].getName)
-//   }
+  def stop(): Unit = {
+    if (server != null) {
+      server.shutdown()
+    }
+  }
 
-//   override def partition(req: PartitionRequest) = {
-//     val receiverIp = req.workerIpAddress;
+  def blockUntilShutdown(): Unit = {
+    if (server != null) {
+      server.awaitTermination()
+    }
+  }
 
-//     // Find which partition to send
-//     val testPartitionToSend:List[ByteString] = List(
-//       ByteString.copyFromUtf8("a"),
-//       ByteString.copyFromUtf8("z")
-//     );
+  private class DistsortWorkerImpl extends DistsortGrpc.Distsort {
+    private[this] val logger = Logger.getLogger(classOf[DistSortWorkerServer].getName)
+    
+    override def workerReady(req: ReadyRequest) = {
+      val reply = ReadyReply()
+      Future.successful(reply)
+    }
+    override def keyRange(req: KeyRangeRequest) = {
+      val reply = KeyRangeReply()
+      Future.successful(reply)
+    }
+    override def sortFinish(req: SortFinishRequest) = {
+      val reply = SortFinishReply()
+      Future.successful(reply)
+    }
 
-//     val reply = PartitionReply(data = testPartitionToSend)
-//     Future.successful(reply)
-//   }
+    override def partition(req: PartitionRequest) = {
+      val receiverIp = req.workerIpAddress;
+      val receivedData = req.data.toList
+      println("receivedData: " + receivedData)
+      // NOTE: save receivedData in machine, receivedData: List[ByteString]
 
-// }
+      val reply = PartitionReply(finish = true)
+      Future.successful(reply)
+    }
+  }
+
+}
