@@ -1,10 +1,10 @@
 package master.server
 
 import network.rpc.master.server.DistSortServer
-import scala.concurrent.{ExecutionContext, Promise}
 import java.util.concurrent.CountDownLatch
-import scala.concurrent.{Promise, SyncVar, Future, Await}
+import scala.concurrent.{Promise, SyncVar, Future, Await, ExecutionContext, blocking}
 import scala.concurrent.duration.Duration
+import master.util.sync.SyncAccList
 import master.Master
 
 
@@ -28,18 +28,27 @@ object DistSortServerImpl {
 
 class DistSortServerImpl(port: Int, numWorkers: Int, connectedWorkers: Promise[List[String]])
 extends DistSortServer(port, ExecutionContext.global) {
+  implicit private val ec = ExecutionContext.global
+
   private val master = new Master(numWorkers)
+
   private val readyRequestLatch = new CountDownLatch(numWorkers)
   private val keyRangeRequestLatch = new CountDownLatch(numWorkers)
   private val partitionRequestLatch = new CountDownLatch(numWorkers)
-  private val syncConnectedWorkers = new SyncVar[List[String]]
-  syncConnectedWorkers.put(List())
-  private val syncShutdown = new SyncVar[Int]
-  syncShutdown.put(numWorkers)
+  private val shutdownLatch = new CountDownLatch(numWorkers)
+
+  private val syncConnectedWorkers = new SyncAccList[String](List())
+
+  private val triggerShutdown = Promise[Unit]
+  triggerShutdown.future.foreach{_ => Future { blocking {
+      Thread.sleep(3000)
+      this.stop()
+    }
+  }}
 
   def handleReadyRequest(workerName: String, workerIpAddress: String) = {
+    syncConnectedWorkers.accumulate(List(workerIpAddress))
     readyRequestLatch.countDown()
-    syncConnectedWorkers.put(workerIpAddress :: syncConnectedWorkers.take)
     readyRequestLatch.await()
     connectedWorkers.trySuccess(syncConnectedWorkers.get)
   }
@@ -60,11 +69,8 @@ extends DistSortServer(port, ExecutionContext.global) {
   }
 
   def handleSortFinishRequest() = {
-    val count = syncShutdown.take()
-    assert(count > 0)
-    count match {
-      case 1 => this.stop()
-      case n => syncShutdown.put(n - 1)
-    }
+    shutdownLatch.countDown()
+    shutdownLatch.await()
+    triggerShutdown.trySuccess(())
   }
 }
