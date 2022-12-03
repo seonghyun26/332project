@@ -97,7 +97,6 @@ class DistSortServer(executionContext: ExecutionContext) { self =>
       try { keyRangeCnt += 1 }
       finally { keyRangeLock.writeLock().unlock() }
 
-      val populationSize = req.populationSize;
       val numSamples = req.numSamples;
       val samples = req.samples;
 
