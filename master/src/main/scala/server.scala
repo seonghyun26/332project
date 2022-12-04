@@ -10,19 +10,20 @@ import master.Master
 
 
 object DistSortServerImpl {
-  final val port = 55555
+  final val defaultPort = 55555
   implicit val ec = ExecutionContext.global
 
   private def printConnectedWorkers(workers: List[String]) = {
     println(workers.mkString(", "))
   }
   
-  def serveRPC(numWorkers: Int) = {
+  def serveRPC(numWorkers: Int, overridePort: Option[Int]) = {
     val connectedWorkers = Promise[List[String]]
+    val port = overridePort.getOrElse(this.defaultPort)
     val server = new DistSortServerImpl(port, numWorkers, connectedWorkers)
     server.start()
     val localIpAddress = InetAddress.getLocalHost.getHostAddress
-    println(localIpAddress)
+    println(s"$localIpAddress:$port")
     connectedWorkers.future.foreach(printConnectedWorkers)
     server.blockUntilShutdown()
   }
