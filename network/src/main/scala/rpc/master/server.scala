@@ -63,7 +63,9 @@ abstract class DistSortServer(port: Int, executionContext: ExecutionContext) {
       samples: List[Array[Byte]],
     ): (List[Array[Byte]], List[String])
 
-  def handlePartitionRequest(): Unit
+  def handlePartitionCompleteRequest(): Unit
+    
+  def handleExchangeCompleteRequest(): Unit
 
   def handleSortFinishRequest(): Unit
 
@@ -88,21 +90,25 @@ abstract class DistSortServer(port: Int, executionContext: ExecutionContext) {
       val keyList = for (key <- keyList_) yield ByteString.copyFrom(key)
 
       val reply = KeyRangeReply(
-        keyList = List(),
-        workerIpList = List(),
+        keyList = keyList,
+        workerIpList = workerIpAddressList,
       )
       Future.successful(reply)
     }
 
-    override def exchangeComplete(request: ExchangeCompleteRequest): Future[ExchangeCompleteReply] = {
-      // Todo: implement this
-      val reply = ExchangeCompleteReply()
+    override def partitionComplete(request: PartitionCompleteRequest): Future[PartitionCompleteReply] = {
+      logger.info("Received PartitionCompleteRequest")
+
+      val _ = handlePartitionCompleteRequest()
+      val reply = PartitionCompleteReply()
       Future.successful(reply)
     }
 
-    override def partitionComplete(request: PartitionCompleteRequest): Future[PartitionCompleteReply] = {
-      // Todo: implement this
-      val reply = PartitionCompleteReply()
+    override def exchangeComplete(request: ExchangeCompleteRequest): Future[ExchangeCompleteReply] = {
+      logger.info("Received ExchangeCompleteRequest")
+
+      val _ = handleExchangeCompleteRequest()
+      val reply = ExchangeCompleteReply()
       Future.successful(reply)
     }
 

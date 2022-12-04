@@ -1,3 +1,4 @@
+package master
 import master.server.DistSortServerImpl
 
 object Entrypoint {
