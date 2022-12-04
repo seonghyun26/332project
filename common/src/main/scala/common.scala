@@ -1,4 +1,3 @@
-
 import java.io._
 
 package object common {

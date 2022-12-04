@@ -1,4 +1,3 @@
-
 package common
 
 import java.lang.IllegalArgumentException
