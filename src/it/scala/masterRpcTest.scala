@@ -13,17 +13,30 @@ class MasterRpcTest extends AnyFunSuite {
   }
 
   test("single master single worker") {
-    val masterPort = 34632
-    val workerPort = 32871
+    val masterPort = 10000
     val numWorkers = 1
     val masterTask = Future {
       masterMain(Array(numWorkers.toString, masterPort.toString))
     }
     val workerTask = Future {
-      val worker = new DummyWorker("worker-1", workerPort, "127.0.0.1", masterPort)
+      val worker = new DummyWorker("worker-0", "127.0.0.1", masterPort)
       worker.run()
     }
     val tasks = List(masterTask, workerTask)
+    Await.result(Future.all(tasks), 10 seconds)
+  }
+
+  test("single master multiple worker - 1") {
+    val masterPort = 10001
+    val numWorkers = 3
+    val masterTask = Future {
+      masterMain(Array(numWorkers.toString, masterPort.toString))
+    }
+    val workerTasks = for (i <- (0 until numWorkers).toList) yield Future {
+      val worker = new DummyWorker(s"worker-$i", "127.0.0.1", masterPort)
+      worker.run()
+    }
+    val tasks = List(masterTask) ++ workerTasks
     Await.result(Future.all(tasks), 10 seconds)
   }
 }

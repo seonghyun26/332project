@@ -48,13 +48,17 @@ extends DistSortServer(port, ExecutionContext.global) {
   private val triggerShutdown = Promise[Unit]
   triggerShutdown.future.foreach{_ => Future { blocking {
       Thread.sleep(3000)
+      logger.info("Shutting down the server...")
       this.stop()
+      this.blockUntilShutdown()
+      logger.info("Server shut down!")
     }
   }}
 
   def handleReadyRequest(workerName: String, workerIpAddress: String) = {
     syncConnectedWorkers.accumulate(List(workerIpAddress))
     readyRequestLatch.countDown()
+    logger.fine("Countdown on readyRequestLatch")
     readyRequestLatch.await()
     connectedWorkers.trySuccess(syncConnectedWorkers.get)
   }
@@ -65,6 +69,7 @@ extends DistSortServer(port, ExecutionContext.global) {
   ): (List[Array[Byte]], List[String]) = {
     val keyRangeResult = master.divideKeyRange(numSamples, samples, syncConnectedWorkers.get)
     keyRangeRequestLatch.countDown()
+    logger.fine("Countdown on keyRangeRequestLatch")
     keyRangeRequestLatch.await()
     val result = keyRangeResult.get
     logger.info("Got key range, returning to worker.")
@@ -73,16 +78,19 @@ extends DistSortServer(port, ExecutionContext.global) {
 
   def handlePartitionCompleteRequest() = {
     partitionCompleteRequestLatch.countDown()
+    logger.fine("Countdown on partitionCompleteRequestLatch")
     partitionCompleteRequestLatch.await()
   }
 
   def handleExchangeCompleteRequest() = {
     exchangeCompleteRequestLatch.countDown()
+    logger.fine("Countdown on exchangeCompleteRequestLatch")
     exchangeCompleteRequestLatch.await()
   }
 
   def handleSortFinishRequest() = {
     shutdownLatch.countDown()
+    logger.fine("Countdown on shutdownLatch")
     shutdownLatch.await()
     triggerShutdown.trySuccess(())
   }

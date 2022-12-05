@@ -20,7 +20,7 @@ import protos.distsortMaster.{
   SortFinishReply
 }
 
-class DummyWorker (workerName: String, port: Int, masterHostname: String, masterPort: Int) {
+class DummyWorker (workerName: String, masterHostname: String, masterPort: Int) {
   private val logger = Logger.getLogger(classOf[DummyWorker].getName)
   val channel = ManagedChannelBuilder.forAddress(masterHostname, masterPort).usePlaintext().build
   val blockingStub = DistsortMasterGrpc.blockingStub(channel)

@@ -19,11 +19,11 @@ class Master(numWorkers: Int) {
   private val calculationTrigger = Promise[Unit]
   calculationTrigger.future.foreach(_ => calculateKeyRange())
   private val syncKeyRange = new SyncVar[(List[Array[Byte]], List[String])]
-  private var workerIpAddressList = new SyncVar[List[String]]
+  private var workerIpAddressList: Option[List[String]] = None
 
-  def setWorkerIpAddressList(workerIpAddressList: List[String]) = {
-    assert(numWorkers == workerIpAddressList.length)
-    this.workerIpAddressList.put(workerIpAddressList)
+  def setWorkerIpAddressList(workerIpList: List[String]) = {
+    assert(numWorkers == workerIpList.length)
+    this.workerIpAddressList = Some(workerIpList)
   }
 
   def divideKeyRange(
@@ -33,14 +33,18 @@ class Master(numWorkers: Int) {
   ): SyncVar[(List[Bytes], List[String])] = {
     for (sample <- samples) assert(sample.length == 10)
     assert(samples.size == numSamples)
-
+    
+    logger.fine(s"Setting workerIpAddressList to $workerIpAddressList")
     this.setWorkerIpAddressList(workerIpAddressList)
-
+    logger.fine("Set workerIpAddressList")
+    
     syncNumSamples.accumulate(numSamples)
     syncSamples.accumulate(samples)
+    logger.fine("Accumulated samples")
     remainingRequests.countDown()
     remainingRequests.await()
 
+    logger.fine("Triggering key range calculation")
     calculationTrigger.trySuccess(())
     syncKeyRange
   }
@@ -50,6 +54,7 @@ class Master(numWorkers: Int) {
     val numSamples = syncNumSamples.take
     val samples = syncSamples.take
     assert(numSamples == samples.size)
+    for (sample <- samples) assert(sample.length == 10)
     
     val keys = samples.map(sample => Key(sample.toList))
     val sortedKeys = keys.sort
@@ -66,13 +71,13 @@ class Master(numWorkers: Int) {
       case Nil => Nil
     }
 
-    if (!this.workerIpAddressList.isSet) {
+    if (!this.workerIpAddressList.isDefined) {
       logger.warning("Worker IP address list is not set")
     }
     if (workerIpAddressList.get.size != numWorkers) {
       logger.warning("Worker IP address list is not complete")
     }
-    assert(workerIpAddressList.isSet && workerIpAddressList.get.size == numWorkers)
+    assert(workerIpAddressList.isDefined && workerIpAddressList.get.size == numWorkers)
     logger.info("Key range calculated")
     syncKeyRange.put((keyRangeResult, workerIpAddressList.get))
   }
