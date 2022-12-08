@@ -25,7 +25,7 @@ class Worker(val inputDirs: List[String], val outputDir: String) {
     val sampleSize = if (numTotalTuples < 1000) numTotalTuples else 1000
     val sample = sampleFromBlocks(blocks, sampleSize)
 
-    sample map { tuple => tuple.toByteString } 
+    sample map { tuple => tuple.key.toByteString } 
   }
 
   def partition(blocks: List[Block], keyRange: List[Key]): List[Block] = {

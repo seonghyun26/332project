@@ -1,5 +1,7 @@
 package common
 
+import com.google.protobuf.ByteString
+
 object Key{
   final val MIN = Key(List.fill(10)(0.toByte))
   final val MAX = Key(List.fill(10)(255.toByte))
@@ -11,6 +13,8 @@ class Key(val value: List[Byte]) extends Comparable[Key]{
   def length = value.length
 
   def asBytes = value.toArray
+
+  def toByteString = ByteString.copyFrom(asBytes)
 
   override def <(other: Key): Boolean = {
     require(length == other.length)

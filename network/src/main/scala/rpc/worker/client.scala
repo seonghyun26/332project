@@ -17,17 +17,19 @@ import protos.distsortWorker.{
 }
 
 object DistSortClient {
+  // NOTE: take worker IP list
   def apply(host: String, port: Int): DistSortClient = {
     val channel = ManagedChannelBuilder.forAddress(host, port).usePlaintext().build
     val blockingStub = DistsortWorkerGrpc.blockingStub(channel)
     val ipWorker = "localhost"
-    val channelWorker = ManagedChannelBuilder.forAddress(ipWorker, 50072).usePlaintext().build
+    val channelWorker = ManagedChannelBuilder.forAddress(ipWorker, 50060).usePlaintext().build
     val blockingStubWorker = DistsortWorkerGrpc.blockingStub(channelWorker)
     new DistSortClient(channel, blockingStub, List((channelWorker, blockingStubWorker)))
   }
 }
 
 class DistSortClient (
+  // TODO:
   private val channel: ManagedChannel,
   private val blockingStub: DistsortWorkerGrpc.DistsortWorkerBlockingStub,
   private val stubList: List[(ManagedChannel, DistsortWorkerGrpc.DistsortWorkerBlockingStub)] 

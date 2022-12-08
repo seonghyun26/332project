@@ -31,6 +31,7 @@ class Master(numWorkers: Int) {
     samples: List[Bytes],
     workerIpAddressList: List[String],
   ): SyncVar[(List[Bytes], List[String])] = {
+    logger.fine(samples(0).length.toString())
     for (sample <- samples) assert(sample.length == 10)
     assert(samples.size == numSamples)
     
@@ -62,12 +63,14 @@ class Master(numWorkers: Int) {
 
     val step = numSamples / numWorkers
     val keyRange = for {
-      i <- (0 until numWorkers by step).toList
-    } yield sortedKeys(i).asBytes
+      i <- (0 until numWorkers).toList
+    } yield sortedKeys(i * step).asBytes
 
-    val minimumKey = Key(List.fill(10)(0.toByte)).asBytes
+    logger.fine(keyRange.length.toString())
+
+    // val minimumKey = Key(List.fill(10)(0.toByte)).asBytes
     val keyRangeResult = keyRange match {
-      case head :: tail => minimumKey :: tail
+      case head :: tail => tail
       case Nil => Nil
     }
 

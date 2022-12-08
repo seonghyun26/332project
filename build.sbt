@@ -1,6 +1,6 @@
 ThisBuild / organization := "univ.postech.csed-332.team-cyan"
 ThisBuild / scalaVersion := "2.12.17"
-ThisBuild / scalacOptions += "-release:11"
+// ThisBuild / scalacOptions += "-release:11"
 
 version := "0.1.0"
 name := "DistSort"
