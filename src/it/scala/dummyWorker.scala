@@ -39,9 +39,7 @@ class DummyWorker (workerName: String, masterHostname: String, masterPort: Int) 
     assert(samples.length == numSamples)
     // Done sampling
     val (keyList, workerIpList) = sendKeyRange(workerName, samples.length, samples)
-    assert(keyList != List.empty)
     assert(workerIpList != List.empty)
-    val keyListInString = keyList.map(_.toByteArray.map(_.toChar).mkString)
     logger.info("Sync Point 2 passed\n")
 
     // Do sorting
