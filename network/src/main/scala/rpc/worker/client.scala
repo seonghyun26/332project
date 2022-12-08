@@ -17,27 +17,24 @@ import protos.distsortWorker.{
 }
 
 object DistSortClient {
-  // NOTE: take worker IP list
-  def apply(host: String, port: Int): DistSortClient = {
-    val channel = ManagedChannelBuilder.forAddress(host, port).usePlaintext().build
-    val blockingStub = DistsortWorkerGrpc.blockingStub(channel)
-    val ipWorker = "localhost"
-    val channelWorker = ManagedChannelBuilder.forAddress(ipWorker, 50060).usePlaintext().build
-    val blockingStubWorker = DistsortWorkerGrpc.blockingStub(channelWorker)
-    new DistSortClient(channel, blockingStub, List((channelWorker, blockingStubWorker)))
+  def apply(workerList: List[String]): DistSortClient = {
+    val channelStubList = workerList map { ip => {
+      var channel = ManagedChannelBuilder.forAddress(ip, 50050).usePlaintext().build
+      var stub = DistsortWorkerGrpc.blockingStub(channel)
+      (channel, stub)
+    }}
+    new DistSortClient(channelStubList)
   }
 }
 
 class DistSortClient (
-  // TODO:
-  private val channel: ManagedChannel,
-  private val blockingStub: DistsortWorkerGrpc.DistsortWorkerBlockingStub,
-  private val stubList: List[(ManagedChannel, DistsortWorkerGrpc.DistsortWorkerBlockingStub)] 
+  private val channelStubList: List[(ManagedChannel, DistsortWorkerGrpc.DistsortWorkerBlockingStub)] 
 ) {
   private[this] val logger = Logger.getLogger(classOf[DistSortClient].getName)
 
   def shutdown(): Unit = {
-    channel.shutdown.awaitTermination(5, TimeUnit.SECONDS)
+    for ( channel <- channelStubList )
+    channel._1.shutdown.awaitTermination(5, TimeUnit.SECONDS)
   }
 
   def sendPartition(workerName: String, sendToIp: String, data: List[ByteString]): Boolean = {
@@ -48,8 +45,8 @@ class DistSortClient (
       data = data
     )
     // NOTE: Find stub using sendToIp
-    // From stub, ip can be achieved by stublist(i)._2.authority()
-    val stubFiltered = stubList.filter(_._1.authority() == sendToIp)
+    // From stub, ip can be achieved by channelStublist(i)._2.authority()
+    val stubFiltered = channelStubList.filter(_._1.authority() == sendToIp)
     assert( stubFiltered != None)
     val stub = stubFiltered(0)._2
 

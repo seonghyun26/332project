@@ -27,7 +27,7 @@ object DistSortServer {
     server.blockUntilShutdown()
   }
 
-  private val port = 50061
+  private val port = 50050
 }
 
 class DistSortServer(executionContext: ExecutionContext) { self =>

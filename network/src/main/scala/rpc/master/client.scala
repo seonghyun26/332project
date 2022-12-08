@@ -28,17 +28,13 @@ object DistSortClient {
   def apply(host: String, port: Int): DistSortClient = {
     val channel = ManagedChannelBuilder.forAddress(host, port).usePlaintext().build
     val blockingStub = DistsortMasterGrpc.blockingStub(channel)
-    val ipWorker = "localhost"
-    val channelWorker = ManagedChannelBuilder.forAddress(ipWorker, 50072).usePlaintext().build
-    val blockingStubWorker = DistsortMasterGrpc.blockingStub(channelWorker)
-    new DistSortClient(channel, blockingStub, List((channelWorker, blockingStubWorker)))
+    new DistSortClient(channel, blockingStub)
   }
 }
 
 class DistSortClient private(
   private val channel: ManagedChannel,
   private val blockingStub: DistsortMasterGrpc.DistsortMasterBlockingStub,
-  private val stubList: List[(ManagedChannel, DistsortMasterGrpc.DistsortMasterBlockingStub)] 
 ) {
   private[this] val logger = Logger.getLogger(classOf[DistSortClient].getName)
 
@@ -106,9 +102,6 @@ class DistSortClient private(
     logger.info(workerName + " exchange completed")
 
     val request = ExchangeCompleteRequest()
-
-    // NOTE: Find stub using sendToIp
-    // From stub, ip can be achieved by stublist(i)._2.authority()
 
     try {
       val response = blockingStub.exchangeComplete(request)

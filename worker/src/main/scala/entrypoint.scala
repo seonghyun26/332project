@@ -17,7 +17,7 @@ import java.util.concurrent.locks.ReentrantReadWriteLock
 
 object Entrypoint {
 
-  val workerName = "333"
+  val workerName = "332"
 
   def main(args: Array[String]): Unit = {
     val (masterHost, masterPort, inputDirs, outputDir) = parseArgs(args)
@@ -44,8 +44,8 @@ object Entrypoint {
     }
 
     // Start server for receiving blocks
-    // TODO:
-    val workerClient = WorkerClient(masterHost, masterPort)
+    // print(workerIpList)
+    val workerClient = WorkerClient(workerIpList)
     // val workerClient = WorkerClient(masterHost, masterPort)
     val workerServer = new WorkerServer(receivedDir)
     workerServer.start()
