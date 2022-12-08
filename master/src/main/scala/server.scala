@@ -4,10 +4,11 @@ import network.rpc.master.server.DistSortServer
 import java.net.InetAddress
 import java.util.logging.Logger
 import java.util.concurrent.CountDownLatch
-import scala.concurrent.{Promise, SyncVar, Future, Await, ExecutionContext, blocking}
+import scala.concurrent.{Promise, SyncVar, Future, Await, ExecutionContext, Channel, blocking}
 import scala.concurrent.duration.Duration
 import master.util.sync.SyncAccList
 import master.Master
+import master.server.interceptor.ServerInterceptor
 
 
 object DistSortServerImpl {
@@ -20,9 +21,11 @@ object DistSortServerImpl {
   
   def serveRPC(numWorkers: Int, overridePort: Option[Int]) = {
     val connectedWorkers = Promise[List[String]]
+    val receiveFromInterceptor = new Channel[String]
     val port = overridePort.getOrElse(this.defaultPort)
-    val server = new DistSortServerImpl(port, numWorkers, connectedWorkers)
-    server.start()
+    val server = new DistSortServerImpl(port, numWorkers, connectedWorkers, receiveFromInterceptor)
+    val interceptor = new ServerInterceptor(receiveFromInterceptor)
+    server.start(Some(interceptor))
     val localIpAddress = InetAddress.getLocalHost.getHostAddress
     println(s"$localIpAddress:$port")
     connectedWorkers.future.foreach(printConnectedWorkers)
@@ -30,7 +33,7 @@ object DistSortServerImpl {
   }
 }
 
-class DistSortServerImpl(port: Int, numWorkers: Int, connectedWorkers: Promise[List[String]])
+class DistSortServerImpl(port: Int, numWorkers: Int, connectedWorkers: Promise[List[String]], receiveFromInterceptor: Channel[String])
 extends DistSortServer(port, ExecutionContext.global) {
   private val logger = Logger.getLogger(classOf[DistSortServerImpl].getName)
   implicit private val ec = ExecutionContext.global
@@ -55,7 +58,8 @@ extends DistSortServer(port, ExecutionContext.global) {
     }
   }}
 
-  def handleReadyRequest(workerName: String, workerIpAddress: String) = {
+  def handleReadyRequest(workerName: String, _workerIpAddress: String) = {
+    val workerIpAddress = receiveFromInterceptor.read
     syncConnectedWorkers.accumulate(List(workerIpAddress))
     readyRequestLatch.countDown()
     logger.fine("Countdown on readyRequestLatch")
