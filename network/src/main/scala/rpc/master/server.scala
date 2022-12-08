@@ -1,6 +1,6 @@
 package network.rpc.master.server
 
-import io.grpc.{Server, ServerBuilder};
+import io.grpc.{Server, ServerBuilder, ServerInterceptor, ServerInterceptors};
 import io.grpc.stub.StreamObserver;
 import java.io.IOException;
 import java.util.concurrent.TimeUnit;
@@ -29,8 +29,15 @@ abstract class DistSortServer(port: Int, executionContext: ExecutionContext) {
   private val logger = Logger.getLogger(classOf[DistSortServer].getName)
   private var server: Server = null
 
-  def start(): Unit = {
-    server = ServerBuilder.forPort(port).addService(DistsortMasterGrpc.bindService(new DistsortImpl, executionContext)).build.start
+  def start(interceptor: Option[ServerInterceptor]): Unit = {
+    val service = 
+      if (interceptor.isDefined) ServerInterceptors.intercept(DistsortMasterGrpc.bindService(new DistsortImpl, executionContext), interceptor.get)
+      else DistsortMasterGrpc.bindService(new DistsortImpl, executionContext)
+    server = ServerBuilder
+      .forPort(port)
+      .addService(service)
+      .build()
+      .start()
     this.logger.info("Server started, listening on " + port)
     sys.addShutdownHook {
       logger.info("*** shutting down gRPC server since JVM is shutting down")

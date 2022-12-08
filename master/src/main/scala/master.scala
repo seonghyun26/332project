@@ -82,6 +82,7 @@ class Master(numWorkers: Int) {
     }
     assert(workerIpAddressList.isDefined && workerIpAddressList.get.size == numWorkers)
     logger.info("Key range calculated")
+    logger.info(s"Worker IP Addresses: ${workerIpAddressList.get}")
     syncKeyRange.put((keyRangeResult, workerIpAddressList.get))
   }
 }
