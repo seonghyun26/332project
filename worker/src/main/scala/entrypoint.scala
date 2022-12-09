@@ -43,29 +43,44 @@ object Entrypoint {
     val partitionWorker = new Worker(inputDirs, partitionDir)
     val blocks = partitionWorker.blocks
 
-    master.sendReadySignal(workerName, thisWorkerRpcPort)
+    logger.info("Worker ready")
+    master.sendReadySignal(workerName, workerName)
 
     // Sample from blocks and send them to master
     val sample = partitionWorker.sample(blocks)
     val (bytes, workerIpList) = master.sendKeyRange(workerName, sample.length, sample)
 
+    logger.info("Worker gets key range from master")
+    logger.info("Another workers: " + workerIpList)
+
     // Partition blocks by given key range
     val keyRange = bytes map { byte => Key(byte.toByteArray.toList) }
+
+    logger.info("Partition started")
+
     val partitionedBlocks = partitionWorker.partition(blocks, keyRange)
+
+    logger.info("Partition completed")
 
     // Sort partitioned blocks
     for (block <- partitionedBlocks) {
       block.sortThenSave
     }
 
+    logger.info("Each partitioned blocks are now sorted")
+
     // Start server for receiving blocks
     // print(workerIpList)
     val workerClient = WorkerClient(workerIpList)
     val workerServer = new WorkerServer(receivedDir)
-    workerServer.start(thisWorkerRpcPort)
+    workerServer.start()
+
+    logger.info("Ready to send partition to other workers")
 
     // Send signal to master to sync.
     master.partitionComplete(workerName)
+
+    logger.info("Partition send started")
 
     // Repeatedly send partitioned blocks to other workers
     for {
@@ -77,15 +92,24 @@ object Entrypoint {
       workerClient.sendPartition(workerName, destIP, byteStringList)
     }
 
+    logger.info("Partition send completed")
+
     // Send signal to master to sync.
     master.exchangeComplete(workerName)
     workerServer.stop()
+
+    logger.info("Merge started")
 
     val mergeWorker = new Worker(List(receivedDir), outputDir)
     val recievedBlocks = mergeWorker.blocks
     val mergedBlocks = mergeWorker.merge(recievedBlocks)
 
+    logger.info("Merge completed")
+
     master.sendFinishSignal(workerName)
+
+    logger.info("Removing temp files...")
+    logger.info("Complete!")
   }
 
   def parseArgs(args: Array[String]): (String, Int, List[String], String, Option[Int]) = {
