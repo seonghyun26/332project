@@ -14,8 +14,11 @@ ThisBuild / libraryDependencies ++= Seq(
   )
 
 ThisBuild / assembly / assemblyMergeStrategy := {
-  case PathList("META-INF", _*) => MergeStrategy.discard
-  case _ => MergeStrategy.first
+  case "META-INF/io.netty.versions.properties" => MergeStrategy.concat
+  case x => {
+    val oldStrategy = (assembly / assemblyMergeStrategy).value
+    oldStrategy(x)
+  }
 }
 
 lazy val root = (project in file("."))
