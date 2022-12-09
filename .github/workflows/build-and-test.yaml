@@ -16,7 +16,7 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v3
       - name: Get Gensort
-        run: bash scripts/get-gensort.sh
+        run: bash script/get-gensort.sh
       - name: Setup Python3
         uses: actions/setup-python@v4
         with:
@@ -36,4 +36,4 @@ jobs:
       - name: Assemble worker module
         run: sbt "worker/assembly"
       - name: Correctness tests
-        run: python3 scripts/check_correctness.py
+        run: python3 script/github-action/check_correctness.py
