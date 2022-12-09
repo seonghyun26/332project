@@ -23,13 +23,14 @@ class Testcase:
             self._validate_config(config)
         except ConfigException as e:
             raise TestcaseException(f'[{config_file_path}]: {e}')
+        self.config_file_name = config_file_path.split('/')[-1]
         self.config = {
             'name': config['name'],
-            'workers': [ { 'index': worker['index'], 'blocks': worker['blocks'] } for worker in config['workers']
-            ]
+            'workers': [ { 'index': worker['index'], 'blocks': worker['blocks'] } for worker in config['workers'] ]
         }
         # just for convenience
         self.num_workers = len(self.config['workers'])
+        self.workers = self.config['workers']
 
     @staticmethod
     def _validate_config(config: dict):
