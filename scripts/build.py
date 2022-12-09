@@ -27,6 +27,6 @@ if __name__ == "__main__":
     ssh.exec_command('sbt "master/assembly"')
     ssh.exec_command('sbt "worker/assembly"')
 
-    getFile(ssh, '/home/cyan/project/worker/target/scala-2.12/worker.jar', '/home/cyan/worker.jar')
-    getFile(ssh, '/home/cyan/project/master/target/scala-2.12/master.jar', '/home/cyan/master.jar')
+    getFile(ssh, '/home/cyan/332project/worker/target/scala-2.12/worker.jar', '/home/cyan/worker.jar')
+    getFile(ssh, '/home/cyan/332project/master/target/scala-2.12/master.jar', '/home/cyan/master.jar')
 
