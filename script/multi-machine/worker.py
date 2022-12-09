@@ -27,7 +27,7 @@ def make_blocks(input_dir, block_cnt):
     for i in range(block_cnt):
         block_filename = f"{input_dir}/partition.{i}"
 
-        cmd = f"gensort -b{offset} "
+        cmd = f"gensort/gensort -b{offset} "
         cmd += f"{NUM_TUPLE_PER_BLOCK} "
         cmd += block_filename
         os.system(cmd)
@@ -65,7 +65,7 @@ def make_command(num_input_dirs):
         input_dirs += f"./input/{idx} "
     output_dir = "./output"
 
-    cmd = f"slave.sh {MASTER_HOST}:{MASTER_PORT} "
+    cmd = f"/usr/bin/java -jar worker.jar {MASTER_HOST}:{MASTER_PORT} "
     cmd += f"-I {input_dirs} "
     cmd += f"-O {output_dir} "
     return cmd
@@ -158,6 +158,9 @@ def dist_info_all_file(output_dir):
 
     return merge_dist_info(dist_info)
 
+def get_gensort():
+    os.system('bash get_gensort.sh')
+
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(
@@ -178,6 +181,7 @@ if __name__ == "__main__":
 
     # set up directory structure
     # use index as input dir name
+    get_gensort()
     make_input_dir(num_input_dirs)
     make_output_dir()
 

@@ -25,6 +25,7 @@ def setup_workers():
             client = createSSHClient(WORKER_IP_ADDRESS, port)
             putFile(client, f'{tempdir}/worker.jar', '/home/cyan/worker.jar')
             putFile(client, '/home/cyan/332project/script/multi-machine/worker.py', '/home/cyan/worker.py')
+            putFile(client, '/home/cyan/332project/script/get-gensort.sh', '/home/cyan/get-gensort.sh')
             exec_command_blocking(client, 'mkdir -p /home/cyan/testcase')
             for config_file_name in os.listdir(TESTCASE_DIRECTORY):
                 putFile(client, f'{TESTCASE_DIRECTORY}/{config_file_name}', f'/home/cyan/testcase/{config_file_name}')
