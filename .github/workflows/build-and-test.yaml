@@ -5,13 +5,13 @@ on:
   push:
     branches:
       - main
-      - github-actions
   pull_request:
     branches:
       - main
 jobs:
   scalatest:
     runs-on: ubuntu-latest
+    timeout-minutes: 7
     steps:
       - name: Checkout
         uses: actions/checkout@v3
