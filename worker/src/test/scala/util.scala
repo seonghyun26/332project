@@ -15,7 +15,7 @@ package object util{
 
   def buildGenSort(): Unit = {
     if (!(new File("./gensort")).exists())
-      "./scripts/get-gensort.sh -q" !
+      "./script/get-gensort.sh -q" !
   }
 
   def makeDir(path: String): Unit = {
