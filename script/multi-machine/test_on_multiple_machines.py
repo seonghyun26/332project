@@ -1,6 +1,4 @@
-from paramiko import SSHClient
 import os
-from typing import Tuple
 from multiprocessing import Process, Queue
 
 from testcase import Testcase
@@ -30,7 +28,9 @@ class TestcaseRunner:
     def run(self):
         num_workers = self.testcase.num_workers
         from_workers = [Queue() for _ in range(num_workers)]
+        print('Running master...')
         master_process = Process(target=self._run_master, args=[num_workers])
+        print('Running workers...')
         worker_processes = [Process(target=self._run_worker, args=[worker['index'], from_workers[i]]) for i, worker in enumerate(self.testcase.workers)]
         master_process.start()
         for worker in worker_processes:
@@ -40,7 +40,11 @@ class TestcaseRunner:
             worker.join()
 
 if __name__ == '__main__':
+    print('Setting up machines... (this may take about a minute)')
     setup_machines()
-    for config_file_name in os.listdir(TESTCASE_DIRECTORY):
+    print('Setup complete.')
+    filenames = os.listdir(TESTCASE_DIRECTORY)
+    for i, config_file_name in enumerate(filenames):
+        print(f'Running testcase {config_file_name} ({i} / {len(filenames)})')
         testcase = Testcase(f'{TESTCASE_DIRECTORY}/{config_file_name}')
         TestcaseRunner(testcase).run()
