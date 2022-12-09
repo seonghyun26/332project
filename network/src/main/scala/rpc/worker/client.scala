@@ -19,7 +19,8 @@ import protos.distsortWorker.{
 object DistSortClient {
   def apply(workerList: List[String]): DistSortClient = {
     val channelStubList = workerList map { ip => {
-      var channel = ManagedChannelBuilder.forAddress(ip, 50050).usePlaintext().build
+      val (address, port) = (ip.split(":")(0), ip.split(":")(1).toInt)
+      var channel = ManagedChannelBuilder.forAddress(address, port).usePlaintext().build
       var stub = DistsortWorkerGrpc.blockingStub(channel)
       (channel, stub)
     }}
@@ -46,7 +47,7 @@ class DistSortClient (
     )
     // NOTE: Find stub using sendToIp
     // From stub, ip can be achieved by channelStublist(i)._2.authority()
-    val stubFiltered = channelStubList.filter(_._1.authority() == sendToIp+":50050")
+    val stubFiltered = channelStubList.filter(_._1.authority() == sendToIp)
     assert( stubFiltered != None)
     val stub = stubFiltered(0)._2
 

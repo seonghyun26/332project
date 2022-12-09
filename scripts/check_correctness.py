@@ -18,7 +18,8 @@ MASTER_JAR_PATH = 'master/target/scala-2.12'
 WORKER_JAR_PATH = 'worker/target/scala-2.12'
 JAVA_HOME = os.getenv('JAVA_HOME')
 
-MASTER_PORT = 44123
+MASTER_PORT = 44100
+WORKER_PORT_BASE = 33100
 # todo: set this limit to a higher value when the sorting algorithm is implemented
 TIMEOUT = 20
 
@@ -45,10 +46,10 @@ def run_master():
     returncode = subprocess.run([f'{JAVA_HOME}/bin/java', '-jar', f'{MASTER_JAR_PATH}/master.jar', str(NUM_WORKERS), str(MASTER_PORT)]).returncode
     exit(returncode)
 
-def run_worker(input_paths: List[str], output_path: str):
+def run_worker(worker_rpc_port: int, input_paths: List[str], output_path: str):
     returncode = subprocess.run([
         f'{JAVA_HOME}/bin/java', '-jar', f'{WORKER_JAR_PATH}/worker.jar', f'127.0.0.1:{MASTER_PORT}',
-        '-I', *input_paths, '-O', output_path
+        '-I', *input_paths, '-O', output_path, '-P', f'{worker_rpc_port}'
     ]).returncode
     exit(returncode)
 
@@ -61,7 +62,7 @@ def do_sort(tempdir: str) -> bool:
     master.start()
     sleep(3)
     workers = [
-        Process(target=run_worker, args=[list_of_input_directories[worker_index], output_directories[worker_index]])
+        Process(target=run_worker, args=[WORKER_PORT_BASE + worker_index, list_of_input_directories[worker_index], output_directories[worker_index]])
         for worker_index in range(NUM_WORKERS)
     ]
     for worker in workers:
