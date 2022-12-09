@@ -1,0 +1,17 @@
+{
+  "name": "multiple workers - 2",
+  "workers": [
+    {
+      "index": 0,
+      "blocks": [1, 2, 3]
+    },
+    {
+      "index": 0,
+      "blocks": [1, 2, 3]
+    },
+    {
+      "index": 0,
+      "blocks": [1, 2, 3]
+    }
+  ]
+}
