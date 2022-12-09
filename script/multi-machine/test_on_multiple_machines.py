@@ -19,7 +19,7 @@ class TestcaseRunner:
 
     def _run_worker(self, worker_index: int, to_runner: Queue):
         ssh = createSSHClient(WORKER_IP_ADDRESS, WORKER_PORTS[worker_index])
-        stdout, stderr = exec_command_blocking(ssh, f'python3 /home/cyan/worker.py {worker_index} {self.testcase.config_file_name}')
+        stdout, stderr = exec_command_blocking(ssh, f'python3 /home/cyan/worker.py {worker_index} testcase/{self.testcase.config_file_name}')
         print('=========[stdout]=========')
         print(stdout)
         print('=========[stderr]=========')
