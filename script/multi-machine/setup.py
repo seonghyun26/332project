@@ -4,7 +4,7 @@ import os
 from ssh import createSSHClient, getFile, putFile, exec_command_blocking
 from machine_info import MASTER_IP_ADDRESS, MASTER_PORT, WORKER_IP_ADDRESS, WORKER_PORTS
 
-TESTCASE_DIRECTORY = 'script/testcase'
+TESTCASE_DIRECTORY = 'script/multi-machine/testcase'
 SBT_BIN = '/home/cyan/.sbt.bin'
 
 def setup_master():

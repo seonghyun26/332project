@@ -7,7 +7,7 @@ from worker import merge_dist_info
 from setup import setup_machines
 from machine_info import MASTER_IP_ADDRESS, MASTER_PORT, WORKER_IP_ADDRESS, WORKER_PORTS
 
-TESTCASE_DIRECTORY = 'script/testcase'
+TESTCASE_DIRECTORY = 'script/multi-machine/testcase'
 
 class TestcaseRunner:
     def __init__(self, testcase: Testcase):
