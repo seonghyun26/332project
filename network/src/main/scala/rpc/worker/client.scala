@@ -46,7 +46,7 @@ class DistSortClient (
     )
     // NOTE: Find stub using sendToIp
     // From stub, ip can be achieved by channelStublist(i)._2.authority()
-    val stubFiltered = channelStubList.filter(_._1.authority() == sendToIp)
+    val stubFiltered = channelStubList.filter(_._1.authority() == sendToIp+":50050")
     assert( stubFiltered != None)
     val stub = stubFiltered(0)._2
 
