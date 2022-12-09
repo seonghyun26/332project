@@ -42,13 +42,15 @@ def generate_input_tuples(input_directories: List[str]):
         gensort.generate_tuples_to_file(NUM_TUPLES, f'{input_directory}/block-{block_number}')
 
 def run_master():
-    subprocess.run([f'{JAVA_HOME}/bin/java', '-jar', f'{MASTER_JAR_PATH}/master.jar', str(NUM_WORKERS), str(MASTER_PORT)])
+    returncode = subprocess.run([f'{JAVA_HOME}/bin/java', '-jar', f'{MASTER_JAR_PATH}/master.jar', str(NUM_WORKERS), str(MASTER_PORT)]).returncode
+    exit(returncode)
 
 def run_worker(input_paths: List[str], output_path: str):
-    subprocess.run([
+    returncode = subprocess.run([
         f'{JAVA_HOME}/bin/java', '-jar', f'{WORKER_JAR_PATH}/worker.jar', f'127.0.0.1:{MASTER_PORT}',
         '-I', *input_paths, '-O', output_path
-    ])
+    ]).returncode
+    exit(returncode)
 
 def do_sort(tempdir: str) -> bool:
     list_of_input_directories = create_input_directories(NUM_WORKERS, tempdir)
