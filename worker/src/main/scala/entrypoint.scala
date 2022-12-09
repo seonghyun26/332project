@@ -44,7 +44,7 @@ object Entrypoint {
     val blocks = partitionWorker.blocks
 
     logger.info("Worker ready")
-    master.sendReadySignal(workerName, workerName)
+    master.sendReadySignal(workerName, thisWorkerRpcPort)
 
     // Sample from blocks and send them to master
     val sample = partitionWorker.sample(blocks)
@@ -73,7 +73,7 @@ object Entrypoint {
     // print(workerIpList)
     val workerClient = WorkerClient(workerIpList)
     val workerServer = new WorkerServer(receivedDir)
-    workerServer.start()
+    workerServer.start(thisWorkerRpcPort)
 
     logger.info("Ready to send partition to other workers")
 
