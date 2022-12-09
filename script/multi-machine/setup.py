@@ -10,6 +10,7 @@ SBT_BIN = '/home/cyan/.sbt.bin'
 def setup_master():
     # Compile the project on the master machine because there is no java on the ssh bridge machine.
     ssh = createSSHClient(MASTER_IP_ADDRESS, MASTER_PORT)
+    exec_command_blocking(ssh, 'rm -f worker.jar master.jar')
     exec_command_blocking(ssh, 'rm -rf 332project && git clone https://github.com/seonghyun26/332project.git')
     exec_command_blocking(ssh, f'cd /home/cyan/332project && {SBT_BIN}/sbt "master/assembly"')
     exec_command_blocking(ssh, f'cd /home/cyan/332project && {SBT_BIN}/sbt "worker/assembly"')
@@ -23,6 +24,7 @@ def setup_workers():
         client.close()
         for port in WORKER_PORTS:
             client = createSSHClient(WORKER_IP_ADDRESS, port)
+            exec_command_blocking(client, 'rm -rf worker.jar testcase worker.py get-gensort.sh')
             putFile(client, f'{tempdir}/worker.jar', '/home/cyan/worker.jar')
             putFile(client, '/home/cyan/332project/script/multi-machine/worker.py', '/home/cyan/worker.py')
             putFile(client, '/home/cyan/332project/script/get-gensort.sh', '/home/cyan/get-gensort.sh')
