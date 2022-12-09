@@ -13,14 +13,13 @@ def get_filename():
 def read_tuple(f):
     return f.read(100)
 
+
 def get_key(t):
     return t[:10]
 
-if __name__ == "__main__":
-    filename = get_filename()
-    max_key = int.from_bytes(b'\x00' * 10, byteorder='big')
-    min_key = int.from_bytes(b'\xff' * 10, byteorder='big')
 
+def get_keys(filename):
+    keys = []
     with open(filename, 'rb') as f:
         while True:
             key = get_key(read_tuple(f))
@@ -28,11 +27,26 @@ if __name__ == "__main__":
                 break
 
             assert(len(key) == 10)
-
             key = int.from_bytes(key, byteorder='big')
+            keys.append(key)
 
-            max_key = max(key, max_key)
-            min_key = min(key, min_key)
+    return keys
 
-    print(f"max key: {hex(max_key)}")
-    print(f"min key: {hex(min_key)}")
+
+def sort_check(keys):
+    for prev, next in zip(keys[:-1], keys[1:]):
+        if prev > next:
+            return False
+    return True
+
+
+if __name__ == "__main__":
+    filename = get_filename()
+
+    keys = get_keys(filename)
+
+    keys.sort()
+
+    print(f"sort check: {sort_check(keys)}")
+    print(f"max key: {hex(keys[-1])}")
+    print(f"min key: {hex(keys[0])}")
