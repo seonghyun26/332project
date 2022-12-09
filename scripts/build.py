@@ -21,11 +21,18 @@ def putFile(client, file, remote_path):
 
 
 if __name__ == "__main__":
-    ssh = createSSHClient('141.223.16.227', '2201', 'cyan', 'cyane4#2002e140b29fc*482a')
+    client = createSSHClient('141.223.16.227', '2201', 'cyan', 'cyane4#2002e140b29fc*482a')
 
-    ssh.exec_command('cd 332project; sbt "master/assembly"')
-    ssh.exec_command('cd 332project; sbt "worker/assembly"')
+    _, stdout, _ = client.exec_command('cd 332project; sbt "master/assembly"')
+    exit_status = stdout.channel.recv_exit_status()
+    if exit_status != 0:
+        raise Exception("Bulid failed")
 
-    getFile(ssh, '/home/cyan/332project/worker/target/scala-2.12/worker.jar', '/home/cyan/worker.jar')
-    getFile(ssh, '/home/cyan/332project/master/target/scala-2.12/master.jar', '/home/cyan/master.jar')
+    _, stdout, _ = client.exec_command('cd 332project; sbt "worker/assembly"')
+    exit_status = stdout.channel.recv_exit_status()
+    if exit_status != 0:
+        raise Exception("Bulid failed")
+
+    getFile(client, '/home/cyan/332project/worker/target/scala-2.12/worker.jar', '/home/cyan/worker.jar')
+    getFile(client, '/home/cyan/332project/master/target/scala-2.12/master.jar', '/home/cyan/master.jar')
 
