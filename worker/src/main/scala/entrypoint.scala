@@ -3,6 +3,8 @@ package worker
 
 import sys.process._
 import java.io.File
+import java.util.logging.Level
+import java.util.logging.Logger
 
 import common._
 
@@ -16,11 +18,21 @@ import scala.concurrent.ExecutionContext
 import java.util.concurrent.locks.ReentrantReadWriteLock
 
 object Entrypoint {
+  private val logger = Logger.getLogger("Worker")
+  logger.setLevel(Level.INFO)
 
   val workerName = "332"
 
   def main(args: Array[String]): Unit = {
+    logger.info("Starting worker ")
+
     val (masterHost, masterPort, inputDirs, outputDir) = parseArgs(args)
+
+    logger.info("Master host: " + masterHost)
+    logger.info("Master port: " + masterPort)
+    logger.info("Input directory: " + inputDirs)
+    logger.info("Output directory: " + outputDir)
+
     val master = Master(masterHost, masterPort)
 
     // Initialize directory structure
@@ -46,7 +58,6 @@ object Entrypoint {
     // Start server for receiving blocks
     // print(workerIpList)
     val workerClient = WorkerClient(workerIpList)
-    // val workerClient = WorkerClient(masterHost, masterPort)
     val workerServer = new WorkerServer(receivedDir)
     workerServer.start()
 
