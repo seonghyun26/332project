@@ -2,15 +2,6 @@ import argparse
 import os
 import json
 
-parser = argparse.ArgumentParser(
-  prog="Worker Tester",
-  description="Woker script executor for testing",
-  )
-
-parser.add_argument("worker_idx", type=int, help="Worker index of this machine")
-parser.add_argument("config_file", type=str, help="configuration file name")
-
-
 MASTER_HOST = "2.2.2.101"
 MASTER_PORT = 55555
 
@@ -169,6 +160,14 @@ def dist_info_all_file(output_dir):
 
 
 if __name__ == "__main__":
+    parser = argparse.ArgumentParser(
+        prog="Worker Tester",
+        description="Woker script executor for testing",
+    )
+
+    parser.add_argument("worker_idx", type=int, help="Worker index of this machine")
+    parser.add_argument("config_file", type=str, help="configuration file name")
+
     args = parser.parse_args()
     worker_idx = args.worker_idx
     config_filename = args.config_file

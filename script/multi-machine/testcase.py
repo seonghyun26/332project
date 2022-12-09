@@ -28,6 +28,8 @@ class Testcase:
             'workers': [ { 'index': worker['index'], 'blocks': worker['blocks'] } for worker in config['workers']
             ]
         }
+        # just for convenience
+        self.num_workers = len(self.config['workers'])
 
     @staticmethod
     def _validate_config(config: dict):
