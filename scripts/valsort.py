@@ -48,7 +48,7 @@ if __name__ == "__main__":
         print("Not sorted: Key range of some block are overlapped")
     elif not all_file_sorted:
         assert(not_sorted_file is not None)
-        print(f"Not sorted: {file} are not sorted")
+        print(f"Not sorted: {not_sorted_file} are not sorted")
     else:
-        print("All files are sorted!")
+        print("All files are sorted")
 
