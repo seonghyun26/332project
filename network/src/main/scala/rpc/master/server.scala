@@ -63,7 +63,7 @@ abstract class DistSortServer(port: Int, executionContext: ExecutionContext) {
     }
   }
 
-  def handleReadyRequest(workerName: String, workerIpAddress: String): Unit
+  def handleReadyRequest(workerName: String, workerRpcPort: Int): Unit
 
   def handleKeyRangeRequest(
       numSamples: Int,
@@ -80,7 +80,7 @@ abstract class DistSortServer(port: Int, executionContext: ExecutionContext) {
     override def workerReady(req: ReadyRequest): Future[ReadyReply] = {
       logger.info("Received ready request from " + req.workerName)
 
-      val _ = handleReadyRequest(req.workerName, req.workerIpAddress)
+      val _ = handleReadyRequest(req.workerName, req.workerRpcPort)
       val reply = ReadyReply()
       Future.successful(reply)
     }

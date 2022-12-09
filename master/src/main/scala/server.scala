@@ -16,7 +16,7 @@ object DistSortServerImpl {
   implicit val ec = ExecutionContext.global
 
   private def printConnectedWorkers(workers: List[String]) = {
-    println(workers.mkString(", "))
+    println(workers.map(address => address.split(":")(0)).mkString(", "))
   }
   
   def serveRPC(numWorkers: Int, overridePort: Option[Int]) = {
@@ -58,9 +58,9 @@ extends DistSortServer(port, ExecutionContext.global) {
     }
   }}
 
-  def handleReadyRequest(workerName: String, _workerIpAddress: String) = {
+  def handleReadyRequest(workerName: String, workerRpcPort: Int) = {
     val workerIpAddress = receiveFromInterceptor.read
-    syncConnectedWorkers.accumulate(List(workerIpAddress))
+    syncConnectedWorkers.accumulate(List(s"$workerIpAddress:$workerRpcPort"))
     readyRequestLatch.countDown()
     logger.fine("Countdown on readyRequestLatch")
     readyRequestLatch.await()

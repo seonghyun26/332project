@@ -42,9 +42,9 @@ class DistSortClient private(
     channel.shutdown.awaitTermination(5, TimeUnit.SECONDS)
   }
 
-  def sendReadySignal(workerName: String, workerIpAddress: String): Boolean = {
+  def sendReadySignal(workerName: String, workerRpcPort: Int): Boolean = {
     logger.info(workerName + " is ready")
-    val request = ReadyRequest(workerName = workerName, workerIpAddress = workerIpAddress)
+    val request = ReadyRequest(workerName = workerName, workerRpcPort = workerRpcPort)
 
     try {
       val response = blockingStub.workerReady(request)

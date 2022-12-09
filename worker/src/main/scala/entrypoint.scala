@@ -22,16 +22,19 @@ object Entrypoint {
   logger.setLevel(Level.INFO)
 
   val workerName = "332"
+  val defaultWorkerRpcPort = 50050
 
   def main(args: Array[String]): Unit = {
     logger.info("Starting worker ")
 
-    val (masterHost, masterPort, inputDirs, outputDir) = parseArgs(args)
+    val (masterHost, masterPort, inputDirs, outputDir, bindingPort) = parseArgs(args)
+    val thisWorkerRpcPort = if (bindingPort.isDefined) bindingPort.get else defaultWorkerRpcPort
 
     logger.info("Master host: " + masterHost)
     logger.info("Master port: " + masterPort)
     logger.info("Input directory: " + inputDirs)
     logger.info("Output directory: " + outputDir)
+    logger.info("This worker's RPC port: " + thisWorkerRpcPort)
 
     val master = Master(masterHost, masterPort)
 
@@ -40,7 +43,7 @@ object Entrypoint {
     val partitionWorker = new Worker(inputDirs, partitionDir)
     val blocks = partitionWorker.blocks
 
-    master.sendReadySignal(workerName, workerName)
+    master.sendReadySignal(workerName, thisWorkerRpcPort)
 
     // Sample from blocks and send them to master
     val sample = partitionWorker.sample(blocks)
@@ -59,7 +62,7 @@ object Entrypoint {
     // print(workerIpList)
     val workerClient = WorkerClient(workerIpList)
     val workerServer = new WorkerServer(receivedDir)
-    workerServer.start()
+    workerServer.start(thisWorkerRpcPort)
 
     // Send signal to master to sync.
     master.partitionComplete(workerName)
@@ -85,15 +88,16 @@ object Entrypoint {
     master.sendFinishSignal(workerName)
   }
 
-  def parseArgs(args: Array[String]): (String, Int, List[String], String) = {
+  def parseArgs(args: Array[String]): (String, Int, List[String], String, Option[Int]) = {
 
     argsLengthCheck(args)
 
     val (masterHost, masterPort) = getMasterIP(args(0))
     val inputDirs = getInputDirs(args)
     val outputDir = getOutputDir(args)
+    val bindingPort = getBindingPort(args)
 
-    (masterHost, masterPort, inputDirs, outputDir)
+    (masterHost, masterPort, inputDirs, outputDir, bindingPort)
   }
 
   def argsLengthCheck(args: Array[String]): Unit = {
@@ -116,12 +120,22 @@ object Entrypoint {
 
   def getOutputDir(args: Array[String]): String = {
     val idx = args.indexWhere(arg => arg == "-O")
-    if (idx == -1) throw new Exception("Provide output directory")
+    if (idx == -1) throw new Exception("Provide output directory using -O option")
 
     val leftArgs = args.drop(idx + 1)
-    if (leftArgs.length > 1) throw new Exception("Too many Arguments")
+    if (leftArgs.length == 0) throw new Exception("Provide output directory")
 
     leftArgs(0)
+  }
+
+  def getBindingPort(args: Array[String]): Option[Int] = {
+    val idx = args.indexWhere(arg => arg == "-P" || arg == "-p")
+    if (idx == -1) return None
+
+    val leftArgs = args.drop(idx + 1)
+    if (leftArgs.length == 0) throw new Exception("Provide port number to bind to")
+
+    Some(leftArgs(0).toInt)
   }
 
   def setUpTempDir(dir: String): Unit = {

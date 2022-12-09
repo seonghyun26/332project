@@ -25,8 +25,8 @@ class DummyWorker (workerName: String, masterHostname: String, masterPort: Int) 
   val channel = ManagedChannelBuilder.forAddress(masterHostname, masterPort).usePlaintext().build
   val blockingStub = DistsortMasterGrpc.blockingStub(channel)
 
-  def run(): Unit = {
-    val syncPointOne = sendReadySignal(workerName, "DummyIpAddress")
+  def run(workerRpcPort: Int): Unit = {
+    val syncPointOne = sendReadySignal(workerName, workerRpcPort)
     assert(syncPointOne)
     logger.info("Sync Point 1 passed\n")
 
@@ -72,9 +72,9 @@ class DummyWorker (workerName: String, masterHostname: String, masterPort: Int) 
     channel.shutdown.awaitTermination(5, TimeUnit.SECONDS)
   }
 
-  def sendReadySignal(workerName: String, workerIpAddress: String): Boolean = {
+  def sendReadySignal(workerName: String, workerRpcPort: Int): Boolean = {
     logger.info(workerName + " is ready")
-    val request = ReadyRequest(workerName = workerName, workerIpAddress = workerIpAddress)
+    val request = ReadyRequest(workerName = workerName, workerRpcPort = workerRpcPort)
 
     try {
       val response = blockingStub.workerReady(request)
