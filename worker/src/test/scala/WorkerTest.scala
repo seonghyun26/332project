@@ -6,6 +6,7 @@ import org.scalatest.funsuite.AnyFunSuite
 import scala.io.Source
 
 import sys.process._
+import common._
 
 import worker.Tuple
 import worker.Block
@@ -22,6 +23,7 @@ class WorkerSuite extends AnyFunSuite {
 
   makeDir("./temp/input")
   makeDir("./temp/output")
+  makeDir("./temp/partitioned")
 
   test("Block Make Test") {
     makeBlock("./temp/input/p1", 1000)
@@ -54,6 +56,24 @@ class WorkerSuite extends AnyFunSuite {
       d1.toList.isSorted &&
       d2.toList.isSorted &&
       d3.toList.isSorted
+    }
+  }
+
+  test("Worker Divide Partition Test") {
+    val partitionWorker = new Worker(List("./temp/input"), "./temp/partitioned")
+    val blocks = partitionWorker.blocks
+    val sample = partitionWorker.sample(blocks)
+
+    val pivot = Key(sample(sample.length / 2).toByteArray.toList)
+    val keyRange = List(pivot)
+
+    val partitionedBlocks = partitionWorker.partition(blocks, keyRange)
+    for(block <- partitionedBlocks) {
+      block.sortThenSave
+    }
+
+    for(block <- partitionedBlocks) {
+      assert { block.toList.isSorted }
     }
   }
 

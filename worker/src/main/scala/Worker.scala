@@ -34,7 +34,9 @@ class Worker(val inputDirs: List[String], val outputDir: String) {
       (workerIndex, tuples) <- block.divideByPartition(keyRange)
     } yield {
       val newBlockPath = outputDir + s"/$blockId.$workerIndex"
-      Block.fromTuples(newBlockPath, tuples)
+      val newBlock = Block.fromTuples(newBlockPath, tuples)
+      newBlock.setPartitionIdx(workerIndex)
+      newBlock
     }
   }
 
