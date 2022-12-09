@@ -19,23 +19,22 @@ import protos.distsortWorker.{
 
 object DistSortServer {
   private val logger = Logger.getLogger(classOf[DistSortServer].getName)
+  private val port = 50050
 
   // NOTE: main code where server starts
   def main(args: Array[String]): Unit = {
     val server = new DistSortServer(ExecutionContext.global)
-    server.start()
+    server.start(port)
     server.blockUntilShutdown()
   }
-
-  private val port = 50050
 }
 
 class DistSortServer(executionContext: ExecutionContext) { self =>
   private[this] var server: Server = null
 
-  def start(): Unit = {
-    server = ServerBuilder.forPort(DistSortServer.port).addService(DistsortWorkerGrpc.bindService(new DistsortImpl, executionContext)).build.start
-    DistSortServer.logger.info("Server started, listening on " + DistSortServer.port)
+  def start(bindingPort: Int): Unit = {
+    server = ServerBuilder.forPort(bindingPort).addService(DistsortWorkerGrpc.bindService(new DistsortImpl, executionContext)).build.start
+    DistSortServer.logger.info("Server started, listening on " + bindingPort)
     sys.addShutdownHook {
       System.err.println("*** shutting down gRPC server since JVM is shutting down")
       self.stop()

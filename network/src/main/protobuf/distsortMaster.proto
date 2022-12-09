@@ -17,7 +17,7 @@ service DistsortMaster {
 
 message ReadyRequest {
   string workerName = 1;
-  string workerIpAddress = 2;
+  int32 workerRpcPort = 2;
 }
 
 message ReadyReply {}
