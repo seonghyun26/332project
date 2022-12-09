@@ -31,7 +31,9 @@ jobs:
         run: sbt compile
       - name: Unit tests
         run: sbt test
-      - name: Package the programs
-        run: sbt assembly
+      - name: Assemble master module
+        run: sbt "master/assembly"
+      - name: Assemble worker module
+        run: sbt "worker/assembly"
       - name: Correctness tests
         run: python3 scripts/check_correctness.py
