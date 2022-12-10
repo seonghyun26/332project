@@ -14,13 +14,13 @@ object Tuple{
 
   def fromBytes(byte: List[Byte]): Tuple = {
     require(byte.length == 100)
-    val (key, value) = byte.splitAt(10)
+    def (key, value) = byte.splitAt(10)
     new Tuple(key, value)
   }
 
   implicit class Tuples(tuples: List[Tuple]) {
     def toBytes: List[Byte] = {
-      val byteList = tuples.foldRight(List[Byte]()){
+      def byteList = tuples.foldRight(List[Byte]()){
         (tuple: Tuple, acc: List[Byte]) => tuple.toBytes ::: acc
       }
 

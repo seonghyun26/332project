@@ -74,14 +74,14 @@ object Comparable {
       if(streamList.isEmpty) Stream.empty
       else {
         assert {streamList forall {stream => (!stream.isEmpty)} }
-        val frontList: List[T] = streamList map { stream => stream.head }
-        val minIdx = frontList.minIdx
+        def frontList: List[T] = streamList map { stream => stream.head }
+        def minIdx = frontList.minIdx
 
         assert {
           frontList.forall( value => frontList(minIdx) <= value )
         }
 
-        val newStreamList: List[Stream[T]] = 
+        def newStreamList: List[Stream[T]] = 
           for {
             (stream, idx) <- streamList.zipWithIndex
             if (idx != minIdx || !stream.tail.isEmpty)

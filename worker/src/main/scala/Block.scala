@@ -68,7 +68,7 @@ class Block(filepath: String){
 
   require { fileSize % 100 == 0 }
 
-  val numTuples: Int = fileSize / 100
+  def numTuples: Int = fileSize / 100
 
   require { numTuples <= Block.maxSize }
 
@@ -82,7 +82,7 @@ class Block(filepath: String){
     def stream: Stream[Tuple] = {
       if(!source.hasNext) Stream.empty
       else {
-        val byteList = source.take(100).toList.map {_.toByte}
+        def byteList = source.take(100).toList.map {_.toByte}
         Tuple.fromBytes(byteList) #:: stream
       }
     }
@@ -113,7 +113,7 @@ class Block(filepath: String){
   }
 
   def sortThenSave: Unit = {
-    val sortedTuples = sorted
+    def sortedTuples = sorted
     writeBytes(sortedTuples.toBytes, file)
   }
 }
