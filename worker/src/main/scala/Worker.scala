@@ -6,12 +6,17 @@ import sys.process._
 import scala.util.Random
 import java.io.File
 
+import java.util.logging.Level
+import java.util.logging.Logger
+
 import common._
 
 import com.google.protobuf.ByteString
 
 
 class Worker(val inputDirs: List[String], val outputDir: String) {
+  private val logger = Logger.getLogger("Worker")
+  logger.setLevel(Level.INFO)
 
   val fileList = inputDirs flatMap {dir => getListOfFiles(dir)}
   val fileNameList = fileList map { file => file.getPath }
@@ -66,6 +71,9 @@ class Worker(val inputDirs: List[String], val outputDir: String) {
   def merge(blocks: List[Block]): List[Block] = {
     val streamList: List[Stream[Tuple]] = blocks map { block => block.toStream }
     val mergedTupleStream: Stream[Tuple] = streamList.mergedStream
+
+    logger.info("stream merged complete")
+
     Block.save(outputDir, mergedTupleStream)
   }
 
