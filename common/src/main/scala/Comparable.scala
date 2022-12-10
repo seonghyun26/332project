@@ -32,6 +32,9 @@ trait Comparable[T <: Comparable[T]] {
 }
 
 object Comparable {
+
+  val debug = false
+
   implicit class ListT[T <: Comparable[T]](list: List[T]){
     def isSorted: Boolean = {
       if (list.isEmpty || list.tail.isEmpty) {
@@ -73,12 +76,18 @@ object Comparable {
     def mergedStream: Stream[T] = {
       if(streamList.isEmpty) Stream.empty
       else {
-        assert {streamList forall {stream => (!stream.isEmpty)} }
-        def frontList: List[T] = streamList map { stream => stream.head }
-        def minIdx = frontList.minIdx
+
+        println("Evaluated: streamList: " + streamList)
 
         assert {
-          frontList.forall( value => frontList(minIdx) <= value )
+          !debug || (streamList forall {stream => (!stream.isEmpty)}) 
+        }
+
+        val frontList: List[T] = streamList map { stream => stream.head }
+        val minIdx = frontList.minIdx
+
+        assert {
+          !debug || (frontList.forall( value => frontList(minIdx) <= value ))
         }
 
         def newStreamList: List[Stream[T]] = 

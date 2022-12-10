@@ -72,6 +72,8 @@ class Worker(val inputDirs: List[String], val outputDir: String) {
     val streamList: List[Stream[Tuple]] = blocks map { block => block.toStream }
     val mergedTupleStream: Stream[Tuple] = streamList.mergedStream
 
+    println("Start save")
+
     Block.save(outputDir, mergedTupleStream)
   }
 
