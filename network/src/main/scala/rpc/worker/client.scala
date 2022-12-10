@@ -20,7 +20,7 @@ object DistSortClient {
   def apply(workerList: List[String]): DistSortClient = {
     val channelStubList = workerList map { ip => {
       val (address, port) = (ip.split(":")(0), ip.split(":")(1).toInt)
-      var channel = ManagedChannelBuilder.forAddress(address, port).usePlaintext().build
+      var channel = ManagedChannelBuilder.forAddress(address, port).maxInboundMessageSize(100 * 1024 * 1024).usePlaintext().build
       var stub = DistsortWorkerGrpc.blockingStub(channel)
       (channel, stub)
     }}

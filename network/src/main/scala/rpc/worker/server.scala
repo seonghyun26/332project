@@ -33,7 +33,7 @@ class DistSortServer(executionContext: ExecutionContext) { self =>
   private[this] var server: Server = null
 
   def start(bindingPort: Int): Unit = {
-    server = ServerBuilder.forPort(bindingPort).addService(DistsortWorkerGrpc.bindService(new DistsortImpl, executionContext)).build.start
+    server = ServerBuilder.forPort(bindingPort).maxInboundMessageSize(100 * 1024 * 1024).addService(DistsortWorkerGrpc.bindService(new DistsortImpl, executionContext)).build.start
     DistSortServer.logger.info("Server started, listening on " + bindingPort)
     sys.addShutdownHook {
       System.err.println("*** shutting down gRPC server since JVM is shutting down")
