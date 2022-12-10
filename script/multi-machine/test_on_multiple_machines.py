@@ -5,7 +5,7 @@ import json
 from time import sleep
 
 from testcase import Testcase
-from ssh import createSSHClient, exec_command_blocking
+from ssh import createSSHClient, exec_command_blocking, exec_command_printing
 from valsort import merge_dist_info
 from setup import setup_machines
 from machine_info import MASTER_IP_ADDRESS, MASTER_PORT, WORKER_IP_ADDRESS, WORKER_PORTS
@@ -28,7 +28,10 @@ class TestcaseRunner:
     def _run_worker(self, worker_index: int, to_runner: Queue):
         try:
             ssh = createSSHClient(WORKER_IP_ADDRESS, WORKER_PORTS[worker_index])
-            stdout, stderr = exec_command_blocking(ssh, f'python3 /home/cyan/worker.py {worker_index} testcase/{self.testcase.config_file_name}')
+            if worker_index == 0:
+                stdout, stderr = exec_command_printing(ssh, f'python3 /home/cyan/worker.py {worker_index} testcase/{self.testcase.config_file_name}')
+            else:
+                stdout, stderr = exec_command_blocking(ssh, f'python3 /home/cyan/worker.py {worker_index} testcase/{self.testcase.config_file_name}')
             print('=========[stdout]=========')
             print(stdout)
             print('=========[stderr]=========')
