@@ -41,16 +41,11 @@ object Block {
   }
 
   def save(tempDir: String, tuples: Iterable[Tuple]): List[Block] = {
-
-    def rec(tuples: Iterable[Tuple], idx: Int, acc: List[Block]): List[Block] = {
-      if (tuples.isEmpty) acc
-      else {
-        val (frontTuples, left) = tuples splitAt maxSize
-        rec(left, idx + 1, fromTuples(tempDir + "/partition." + idx, frontTuples) :: acc)
-      }
+    for {
+      (tuple, idx) <- tuples.grouped(maxSize).zipWithIndex
+    } yield {
+      fromTuples(tempDir + "/partition." + idx, tuple)
     }
-
-    rec(tuples, 0, List())
   }
 }
 
