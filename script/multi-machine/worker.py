@@ -194,3 +194,6 @@ if __name__ == "__main__":
 
     dist_info = dist_info_all_file(OUTPUT_DIR)
     print(dist_info)
+
+    os.system(f"rm -rf {INPUT_DIR}")
+    os.system(f"rm -rf {OUTPUT_DIR}")
