@@ -111,7 +111,7 @@ def get_filenames(dir):
 
 
 def merge_dist_info(dist_info_list):
-    all_sorted = False
+    all_sorted = True
     for dist in dist_info_list:
         if not dist["sorted"]:
             all_sorted = False
@@ -156,7 +156,7 @@ def dist_info_all_file(output_dir):
         }
         dist_infos.append(dist_info)
 
-    return merge_dist_info(dist_info)
+    return merge_dist_info(dist_infos)
 
 def get_gensort():
     os.system('bash get_gensort.sh')
