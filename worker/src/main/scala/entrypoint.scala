@@ -3,7 +3,6 @@ package worker
 
 import sys.process._
 import java.io.File
-import scala.reflect.io.Directory
 
 import java.util.logging.Level
 import java.util.logging.Logger
@@ -115,7 +114,7 @@ object Entrypoint {
 
     logger.info("Removing temp files...")
 
-    removeFilesInDir(recievedDir)
+    removeFilesInDir(receivedDir)
     removeFilesInDir(partitionDir)
 
     logger.info("Complete!")

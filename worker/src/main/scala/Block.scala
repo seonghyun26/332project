@@ -55,9 +55,11 @@ class Block(filepath: String){
 
   def fileSize = file.length.toInt
 
-  require { fileSize < Block.maxSize && fileSize % 100 == 0 }
+  require { fileSize % 100 == 0 }
 
   val numTuples: Int = fileSize / 100
+
+  require { numTuples < Block.maxSize }
 
   var partitionIdx: Option[Int] = None
 
