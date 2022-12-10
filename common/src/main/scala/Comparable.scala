@@ -54,7 +54,17 @@ object Comparable {
 
     def minIdx: Int = {
       require { !list.isEmpty }
-      list.indexOf(sort(0))
+
+      var idx = 0
+      var min = list(idx)
+      for { (elem, i) <- list.zipWithIndex } yield {
+        if (elem < min) {
+          idx = i
+          min = elem
+        } 
+      }
+
+      idx
     }
 
     def getRangeIdx(value: T): Int = {
