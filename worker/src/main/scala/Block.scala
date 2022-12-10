@@ -9,6 +9,8 @@ import java.util.logging.Level
 import java.util.logging.Logger
 
 import java.io._
+import java.net._
+
 import common._
 
 object Block {
@@ -27,10 +29,13 @@ object Block {
     tuples groupBy {t => getPartitionIdxOf(t.key)}
   }
 
-  def fromTuples(path: String, tuples: List[Tuple]): Block = {
-    require(tuples.length <= maxSize)
+  def fromTuples(path: String, tuples: Iterable[Tuple]): Block = {
 
-    writeBytes(tuples.toBytes, new File(path))
+    val file = new File(path)
+    val target = new BufferedOutputStream( new FileOutputStream(file) )
+
+    tuples.foreach { tuple => target.write(tuple.toBytes.toArray) }
+    target.close()
 
     new Block(path)
   }
@@ -41,7 +46,7 @@ object Block {
       if (tuples.isEmpty) acc
       else {
         val (frontTuples, left) = tuples splitAt maxSize
-        rec(left, idx + 1, fromTuples(tempDir + "/partition." + idx, frontTuples.toList) :: acc)
+        rec(left, idx + 1, fromTuples(tempDir + "/partition." + idx, frontTuples) :: acc)
       }
     }
 
