@@ -21,7 +21,7 @@ object Tuple{
   implicit class Tuples(tuples: List[Tuple]) {
     def toBytes: List[Byte] = {
       val byteList = tuples.foldRight(List[Byte]()){
-        (tuple: Tuple, acc: List[Byte]) => tuple.toBytes ++ acc
+        (tuple: Tuple, acc: List[Byte]) => tuple.toBytes ::: acc
       }
 
       // Check if order preserved.

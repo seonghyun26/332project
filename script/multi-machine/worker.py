@@ -182,6 +182,10 @@ if __name__ == "__main__":
     # set up directory structure
     # use index as input dir name
     get_gensort()
+
+    os.system(f"rm -rf {INPUT_DIR}")
+    os.system(f"rm -rf {OUTPUT_DIR}")
+
     make_input_dir(num_input_dirs)
     make_output_dir()
 
@@ -194,6 +198,3 @@ if __name__ == "__main__":
 
     dist_info = dist_info_all_file(OUTPUT_DIR)
     print(dist_info)
-
-    os.system(f"rm -rf {INPUT_DIR}")
-    os.system(f"rm -rf {OUTPUT_DIR}")
