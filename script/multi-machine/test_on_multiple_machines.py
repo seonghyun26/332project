@@ -2,6 +2,7 @@ import os
 from multiprocessing import Process, Queue
 import re
 import json
+from time import sleep
 
 from testcase import Testcase
 from ssh import createSSHClient, exec_command_blocking
@@ -45,12 +46,14 @@ class TestcaseRunner:
     def run(self) -> bool:
         num_workers = self.testcase.num_workers
         from_workers = [Queue() for _ in range(num_workers)]
-        print('Running master...')
         master_process = Process(target=self._run_master, args=[num_workers])
-        print('Running workers...')
         worker_processes = [Process(target=self._run_worker, args=[worker['index'], from_workers[i]]) for i, worker in enumerate(self.testcase.workers)]
         try:
+            print('Running master...')
             master_process.start()
+            print('Waiting for master... (3 secs)')
+            sleep(3)
+            print('Running workers...')
             for worker in worker_processes:
                 worker.start()
             results = [from_workers[i].get() for i in range(num_workers)]
