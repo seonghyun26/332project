@@ -166,7 +166,7 @@ object Entrypoint {
   }
 
   def setUpTempDir(dir: String): Unit = {
-    val tempDir = new File(dir + "/temp")
+    val tempDir = new File(dir)
     tempDir.mkdirs()
   }
 
