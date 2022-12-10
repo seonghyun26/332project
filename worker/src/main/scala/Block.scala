@@ -9,7 +9,7 @@ import java.io._
 import common._
 
 object Block {
-  def maxSize = 360000 * 100
+  def maxSize = 360000
 
   def divideTuplesByPartition(
     tuples: List[Tuple], 

@@ -3,6 +3,8 @@ package worker
 
 import sys.process._
 import java.io.File
+import scala.reflect.io.Directory
+
 import java.util.logging.Level
 import java.util.logging.Logger
 
@@ -112,6 +114,10 @@ object Entrypoint {
     master.sendFinishSignal(workerName)
 
     logger.info("Removing temp files...")
+
+    removeFilesInDir(recievedDir)
+    removeFilesInDir(partitionDir)
+
     logger.info("Complete!")
   }
 
@@ -176,6 +182,18 @@ object Entrypoint {
     setUpTempDir(partitionDir)
     setUpTempDir(receivedDir)
     (partitionDir, receivedDir)
+  }
+
+  def removeFilesInDir(dir: String): Unit = {
+    def deleteRecursively(file: File): Unit = {
+      if (file.isDirectory) {
+        file.listFiles.foreach(deleteRecursively)
+      }
+      if (file.exists && !file.delete) {
+        throw new Exception(s"Unable to delete ${file.getAbsolutePath}")
+      }
+    }
+    deleteRecursively(new File(dir))
   }
 }
 
