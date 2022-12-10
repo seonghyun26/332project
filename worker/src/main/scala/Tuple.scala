@@ -14,7 +14,7 @@ object Tuple{
 
   def fromBytes(byte: List[Byte]): Tuple = {
     require(byte.length == 100)
-    def (key, value) = byte.splitAt(10)
+    val (key, value) = byte.splitAt(10)
     new Tuple(key, value)
   }
 
