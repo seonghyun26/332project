@@ -50,7 +50,7 @@ object Entrypoint {
     // Sample from blocks and send them to master
     val sample = partitionWorker.sample(blocks)
 
-    logger.info("Sample from blocks : " + sample.length)
+    logger.info("# tuples sampled : " + sample.length)
 
     val (bytes, workerIpList) = master.sendKeyRange(workerName, sample.length, sample)
 
