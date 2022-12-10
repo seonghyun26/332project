@@ -41,11 +41,13 @@ object Block {
   }
 
   def save(tempDir: String, tuples: Iterable[Tuple]): List[Block] = {
-    for {
+    (
+      for {
       (tuple, idx) <- tuples.grouped(maxSize).zipWithIndex
     } yield {
       fromTuples(tempDir + "/partition." + idx, tuple)
     }
+    ).toList
   }
 }
 
