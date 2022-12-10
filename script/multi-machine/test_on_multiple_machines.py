@@ -34,7 +34,7 @@ class TestcaseRunner:
             print('=========[stderr]=========')
             print(stderr)
             try:
-                result = json.loads(re.search(r'\{.+\}', stdout).group(0).replace('\'', '"'))
+                result = json.loads(re.search(r'\{.+\}', stdout).group(0).replace('\'', '"').lower())
             except json.decoder.JSONDecodeError:
                 result = None
             to_runner.put(result)
