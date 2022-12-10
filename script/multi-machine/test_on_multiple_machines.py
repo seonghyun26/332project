@@ -14,37 +14,59 @@ class TestcaseRunner:
         self.testcase = testcase
 
     def _run_master(self, num_workers: int):
-        ssh = createSSHClient(MASTER_IP_ADDRESS, MASTER_PORT)
-        exec_command_blocking(ssh, f'/usr/bin/java -jar /home/cyan/master.jar {num_workers}')
+        try:
+            ssh = createSSHClient(MASTER_IP_ADDRESS, MASTER_PORT)
+            exec_command_blocking(ssh, f'/usr/bin/java -jar /home/cyan/master.jar {num_workers}')
+        except KeyboardInterrupt:
+            cmd = "kill -s kill `ps x | grep master.jar | grep -v grep | awk '{print $1}'`"
+            exec_command_blocking(ssh, cmd)
+            ssh.close()
 
     def _run_worker(self, worker_index: int, to_runner: Queue):
-        ssh = createSSHClient(WORKER_IP_ADDRESS, WORKER_PORTS[worker_index])
-        stdout, stderr = exec_command_blocking(ssh, f'python3 /home/cyan/worker.py {worker_index} testcase/{self.testcase.config_file_name}')
-        print('=========[stdout]=========')
-        print(stdout)
-        print('=========[stderr]=========')
-        print(stderr)
+        try:
+            ssh = createSSHClient(WORKER_IP_ADDRESS, WORKER_PORTS[worker_index])
+            stdout, stderr = exec_command_blocking(ssh, f'python3 /home/cyan/worker.py {worker_index} testcase/{self.testcase.config_file_name}')
+            print('=========[stdout]=========')
+            print(stdout)
+            print('=========[stderr]=========')
+            print(stderr)
+        except KeyboardInterrupt:
+            cmd = "kill -s kill `ps x | egrep 'worker.py|worker.jar' | grep -v grep | awk '{print $1}'`"
+            exec_command_blocking(ssh, cmd)
+            ssh.close()
 
-    def run(self):
+    def run(self) -> bool:
         num_workers = self.testcase.num_workers
         from_workers = [Queue() for _ in range(num_workers)]
         print('Running master...')
         master_process = Process(target=self._run_master, args=[num_workers])
         print('Running workers...')
         worker_processes = [Process(target=self._run_worker, args=[worker['index'], from_workers[i]]) for i, worker in enumerate(self.testcase.workers)]
-        master_process.start()
-        for worker in worker_processes:
-            worker.start()
-        master_process.join()
-        for worker in worker_processes:
-            worker.join()
+        try:
+            master_process.start()
+            for worker in worker_processes:
+                worker.start()
+            master_process.join()
+            for worker in worker_processes:
+                worker.join()
+            return False
+        except KeyboardInterrupt:
+            master_process.join()
+            for worker in worker_processes:
+                worker.join()
+            return True
 
 if __name__ == '__main__':
-    print('Setting up machines... (this may take about a minute)')
-    setup_machines()
-    print('Setup complete.')
+    do_setup = input('Setup machines? (y/n): ')
+    if do_setup == 'y':
+        setup_machines()
+    else:
+        print('Skipping setup...')
     filenames = os.listdir(TESTCASE_DIRECTORY)
     for i, config_file_name in enumerate(filenames):
         print(f'Running testcase {config_file_name} ({i} / {len(filenames)})')
         testcase = Testcase(f'{TESTCASE_DIRECTORY}/{config_file_name}')
-        TestcaseRunner(testcase).run()
+        interrupted = TestcaseRunner(testcase).run()
+        if interrupted:
+            print('Interrupted by user')
+            break

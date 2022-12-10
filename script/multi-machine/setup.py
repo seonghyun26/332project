@@ -36,3 +36,8 @@ def setup_workers():
 def setup_machines():
     setup_master()
     setup_workers()
+
+if __name__ == '__main__':
+    print('Setting up machines... (this may take about a minute)')
+    setup_machines()
+    print('Setup complete.')
