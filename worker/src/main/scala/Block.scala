@@ -37,16 +37,15 @@ object Block {
 
   def save(tempDir: String, tuples: Iterable[Tuple]): List[Block] = {
 
-    def rec(tuples: Iterable[Tuple], idx: Int): List[Block] = {
-      if (tuples.isEmpty) List()
+    def rec(tuples: Iterable[Tuple], idx: Int, acc: List[Block]): List[Block] = {
+      if (tuples.isEmpty) acc
       else {
         val (frontTuples, left) = tuples splitAt maxSize
-        fromTuples(tempDir + "/partition." + idx, frontTuples.toList) :: rec(left, idx + 1)
+        rec(left, idx + 1, fromTuples(tempDir + "/partition." + idx, frontTuples.toList) :: acc)
       }
     }
 
-    Block.logger.info("Save start")
-    rec(tuples, 0)
+    rec(tuples, 0, List())
   }
 }
 
