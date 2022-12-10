@@ -59,7 +59,9 @@ class TestcaseRunner:
 if __name__ == '__main__':
     do_setup = input('Setup machines? (y/n): ')
     if do_setup == 'y':
+        print('Setting up machines...')
         setup_machines()
+        print('Setup complete')
     else:
         print('Skipping setup...')
     filenames = os.listdir(TESTCASE_DIRECTORY)
