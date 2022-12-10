@@ -1,14 +1,6 @@
 
 import argparse
 
-parser = argparse.ArgumentParser(prog = "keyrange", description = "Print a key range (max, min)")
-parser.add_argument('filename', type=str)
-args = parser.parse_args()
-
-
-def get_filename():
-    return args.filename
-
 
 def read_tuple(f):
     return f.read(100)
@@ -41,7 +33,11 @@ def sort_check(keys):
 
 
 if __name__ == "__main__":
-    filename = get_filename()
+    parser = argparse.ArgumentParser(prog = "keyrange", description = "Print a key range (max, min)")
+    parser.add_argument('filename', type=str)
+    args = parser.parse_args()
+
+    filename = args.filename
 
     keys = get_keys(filename)
 
