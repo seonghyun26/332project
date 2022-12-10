@@ -5,11 +5,17 @@ import scala.util.Random
 
 import java.lang.IllegalArgumentException
 
+import java.util.logging.Level
+import java.util.logging.Logger
+
 import java.io._
 import common._
 
 object Block {
   def maxSize = 360000
+
+  private val logger = Logger.getLogger("Block")
+  logger.setLevel(Level.INFO)
 
   def divideTuplesByPartition(
     tuples: List[Tuple], 
@@ -39,6 +45,7 @@ object Block {
       }
     }
 
+    Block.logger.info("Save start")
     rec(tuples, 0)
   }
 }
