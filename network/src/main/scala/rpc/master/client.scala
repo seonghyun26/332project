@@ -61,6 +61,10 @@ class DistSortClient private(
 
   def sendKeyRange(workerName: String, numSamples: Int, samples: List[ByteString]): (List[ByteString], List[String]) = {
     logger.info(workerName + " sending key range")
+
+    logger.info(workerName + " # samples: " + numSamples)
+    logger.info(workerName + " sample: " + samples)
+
     val request = KeyRangeRequest( 
       numSamples = numSamples,
       samples = samples
