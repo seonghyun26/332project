@@ -77,8 +77,6 @@ object Comparable {
       if(streamList.isEmpty) Stream.empty
       else {
 
-        println("Evaluated: streamList: " + streamList)
-
         assert {
           !debug || (streamList forall {stream => (!stream.isEmpty)}) 
         }
