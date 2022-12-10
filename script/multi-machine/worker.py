@@ -159,7 +159,7 @@ def dist_info_all_file(output_dir):
     return merge_dist_info(dist_infos)
 
 def get_gensort():
-    os.system('bash get_gensort.sh')
+    os.system('bash get-gensort.sh')
 
 
 if __name__ == "__main__":
