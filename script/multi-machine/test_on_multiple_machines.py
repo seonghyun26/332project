@@ -1,9 +1,11 @@
 import os
 from multiprocessing import Process, Queue
+import re
+import json
 
 from testcase import Testcase
 from ssh import createSSHClient, exec_command_blocking
-from worker import merge_dist_info
+from valsort import merge_dist_info
 from setup import setup_machines
 from machine_info import MASTER_IP_ADDRESS, MASTER_PORT, WORKER_IP_ADDRESS, WORKER_PORTS
 
@@ -30,6 +32,11 @@ class TestcaseRunner:
             print(stdout)
             print('=========[stderr]=========')
             print(stderr)
+            try:
+                result = json.loads(re.search(r'\{.+\}', stdout).group(0))
+            except:
+                result = None
+            to_runner.put(result)
         except KeyboardInterrupt:
             cmd = "kill -s kill `ps x | egrep 'worker.py|worker.jar' | grep -v grep | awk '{print $1}'`"
             exec_command_blocking(ssh, cmd)
@@ -46,6 +53,10 @@ class TestcaseRunner:
             master_process.start()
             for worker in worker_processes:
                 worker.start()
+            results = [from_workers[i].get() for i in range(num_workers)]
+            final_result = merge_dist_info(results)
+            print('=========[final result]=========')
+            print(final_result)
             master_process.join()
             for worker in worker_processes:
                 worker.join()
@@ -66,7 +77,7 @@ if __name__ == '__main__':
         print('Skipping setup...')
     filenames = os.listdir(TESTCASE_DIRECTORY)
     for i, config_file_name in enumerate(filenames):
-        print(f'Running testcase {config_file_name} ({i} / {len(filenames)})')
+        print(f'Running testcase {config_file_name} ({i + 1} / {len(filenames)})')
         testcase = Testcase(f'{TESTCASE_DIRECTORY}/{config_file_name}')
         interrupted = TestcaseRunner(testcase).run()
         if interrupted:
