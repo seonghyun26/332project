@@ -73,8 +73,13 @@ object Comparable {
         case idx => idx
       }
 
-      assert { idx >= 0 && idx <= list.length }
       assert { 
+        !debug || 
+        idx >= 0 && idx <= list.length 
+      }
+
+      assert { 
+        !debug ||
             !(idx != 0 && idx != list.length) ||
             (list(idx-1) <= value && value < list(idx)) 
             }

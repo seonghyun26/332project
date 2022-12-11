@@ -8,11 +8,16 @@ object Key{
 
   def apply(str: String): Key = new Key(str)
 
-  def fromBytes(bytes: Iterable[Byte]): Key = new Key(bytes.map(_.toChar).mkString)
+  def fromBytes(bytes: List[Byte]): Key = {
+    assert { bytes.length == 10 }
+    new Key(bytes.map(_.toChar).mkString)
+  }
 }
 
 class Key(val value: String) extends Comparable[Key]{
   def length = value.length
+
+  assert { length == 10 }
 
   def asBytes = value.map(_.toByte).toArray
 
