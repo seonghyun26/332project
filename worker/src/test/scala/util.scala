@@ -24,6 +24,6 @@ package object util{
   }
 
   def makeBlock(path: String, size: Int): Unit = {
-    s"gensort -b $size $path" !
+    s"./gensort/gensort -b $size $path" !
   }
 }
