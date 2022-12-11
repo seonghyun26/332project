@@ -16,7 +16,7 @@ import com.google.protobuf.ByteString
 
 class Worker(val inputDirs: List[String], val outputDir: String) {
   private val logger = Logger.getLogger("Worker")
-  logger.setLevel(Level.INFO)
+  logger.setLevel(Level.SEVERE)
 
   val fileList = inputDirs flatMap {dir => getListOfFiles(dir)}
   val fileNameList = fileList map { file => file.getPath }
@@ -30,7 +30,7 @@ class Worker(val inputDirs: List[String], val outputDir: String) {
     val sampleSize = if (numTotalTuples < 1000) numTotalTuples else 1000
     val sample = sampleFromBlocks(blocks, sampleSize)
 
-    sample map { tuple => tuple.key.toByteString } 
+    sample map { tuple => tuple.key.toByteString }
   }
 
   def partition(blocks: List[Block], keyRange: List[Key]): List[Block] = {
@@ -46,8 +46,7 @@ class Worker(val inputDirs: List[String], val outputDir: String) {
   }
 
   def initializeBlocks(fileNameList: List[String]): List[Block] = {
-    val blocks = fileNameList map { fileName:String => new Block(fileName) }
-
+    val blocks = fileNameList map { fileName: String => new Block(fileName) }
     blocks
   }
 
@@ -72,7 +71,7 @@ class Worker(val inputDirs: List[String], val outputDir: String) {
     def streamList: List[Stream[Tuple]] = blocks map { block => block.toStream }
     def mergedTupleStream: Stream[Tuple] = streamList.mergedStream
 
-    println("Start save")
+    logger.info("Merge started")
 
     Block.save(outputDir, mergedTupleStream)
   }
