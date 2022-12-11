@@ -91,8 +91,8 @@ object Comparable {
           !debug || (streamList forall {stream => (!stream.isEmpty)}) 
         }
 
-        val frontList: List[T] = streamList map { stream => stream.head }
-        val minIdx = frontList.minIdx
+        def frontList: List[T] = streamList map { stream => stream.head }
+        def minIdx = frontList.minIdx
 
         assert {
           !debug || (frontList.forall( value => frontList(minIdx) <= value ))
