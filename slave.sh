@@ -1,2 +1,2 @@
 #!/bin/bash
-java -jar worker/target/scala-2.12/worker.jar $@
+java -Xmx8g -jar worker/target/scala-2.12/worker.jar $@
