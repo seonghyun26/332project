@@ -77,7 +77,10 @@ class Block(filepath: String){
     val source = Source.fromFile(filepath, "ISO8859-1")
 
     def stream: Stream[Tuple] = {
-      if(!source.hasNext) Stream.empty
+      if(!source.hasNext){
+        Stream.empty
+        source.close()
+      }
       else {
         def byteList = source.take(100).toList.map {_.toByte}
         Tuple.fromBytes(byteList) #:: stream
