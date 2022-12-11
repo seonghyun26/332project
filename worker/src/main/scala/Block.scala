@@ -78,8 +78,8 @@ class Block(filepath: String){
 
     def stream: Stream[Tuple] = {
       if(!source.hasNext){
-        Stream.empty
         source.close()
+        Stream.empty
       }
       else {
         def byteList = source.take(100).toList.map {_.toByte}
