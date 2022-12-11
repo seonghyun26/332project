@@ -87,16 +87,20 @@ class Block(filepath: String){
   }
 
   def toList: List[Tuple] = {
-    val source = Source.fromFile(filepath, "ISO8859-1").toList
+    val source = Source.fromFile(filepath, "ISO8859-1")
 
-    (
-    for {
-      seqchar <- source.grouped(100)
-    } yield {
-      val byteList = seqchar.toList.map {_.toByte}
-      Tuple.fromBytes(byteList)
-    }
+    val tupleList = (
+      for {
+        seqchar <- source.grouped(100)
+      } yield {
+        val byteList = seqchar.toList.map {_.toByte}
+        Tuple.fromBytes(byteList)
+      }
     ).toList
+
+    source.close()
+
+    tupleList
   }
 
   def sorted: List[Tuple] = {
