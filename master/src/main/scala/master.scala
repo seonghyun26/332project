@@ -57,7 +57,7 @@ class Master(numWorkers: Int) {
     assert(numSamples == samples.size)
     for (sample <- samples) assert(sample.length == 10)
     
-    val keys = samples.map(sample => Key(sample.toList))
+    val keys = samples.map(sample => Key.fromBytes(sample.toList))
     val sortedKeys = keys.sort
     assert(sortedKeys.isSorted)
 

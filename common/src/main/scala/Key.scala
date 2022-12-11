@@ -3,33 +3,30 @@ package common
 import com.google.protobuf.ByteString
 
 object Key{
-  final val MIN = Key(List.fill(10)(0.toByte))
-  final val MAX = Key(List.fill(10)(255.toByte))
+  final val MIN = Key.fromBytes(List.fill(10)(0.toByte))
+  final val MAX = Key.fromBytes(List.fill(10)(255.toByte))
 
-  def apply(byte: List[Byte]): Key = new Key(byte)
+  def apply(str: String): Key = new Key(str)
+
+  def fromBytes(bytes: Iterable[Byte]): Key = new Key(bytes.map(_.toChar).mkString)
 }
 
-class Key(val value: List[Byte]) extends Comparable[Key]{
+class Key(val value: String) extends Comparable[Key]{
   def length = value.length
 
-  def asBytes = value.toArray
+  def asBytes = value.map(_.toByte).toArray
 
   def toByteString = ByteString.copyFrom(asBytes)
 
   override def <(other: Key): Boolean = {
     require(length == other.length)
 
-    def toUnsigned(a: Byte): Int = {
-      if(a < 0) a.toInt + 0x100
-      else a.toInt
-    }
-
-    def less(a: List[Int], b: List[Int]): Boolean = {
+    def less(a: String, b: String): Boolean = {
       if (a.isEmpty && b.isEmpty) return false
       else (a.head < b.head) || (a.head == b.head && less(a.tail, b.tail))
     }
 
-    less(value map toUnsigned, other.value map toUnsigned)
+    less(value, other.value)
   }
 
   override def ==(other: Key): Boolean = {

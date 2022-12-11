@@ -64,7 +64,7 @@ class WorkerSuite extends AnyFunSuite {
     val blocks = partitionWorker.blocks
     val sample = partitionWorker.sample(blocks)
 
-    val pivot = Key(sample(sample.length / 2).toByteArray.toList)
+    val pivot = Key.fromBytes(sample(sample.length / 2).toByteArray.toList)
     val keyRange = List(pivot)
 
     val partitionedBlocks = partitionWorker.partition(blocks, keyRange)
