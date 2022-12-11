@@ -40,7 +40,7 @@ object Block {
     new Block(path)
   }
 
-  def save(tempDir: String, tuples: Iterable[Tuple]): List[Block] = {
+  def save(tempDir: String, tuples: =>Stream[Tuple]): List[Block] = {
     (
       for {
       (tuple, idx) <- tuples.grouped(maxSize).zipWithIndex
