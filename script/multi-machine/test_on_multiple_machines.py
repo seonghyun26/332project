@@ -17,8 +17,11 @@ class TestcaseRunner:
         self.testcase = testcase
 
     def _run_master(self, num_workers: int, master_port: int):
+        # kill previous master
+        ssh = createSSHClient(MASTER_IP_ADDRESS, MASTER_PORT)
+        cmd = "kill -s kill `ps x | grep master.jar | grep -v grep | awk '{print $1}'`"
+        exec_command_blocking(ssh, cmd)
         try:
-            ssh = createSSHClient(MASTER_IP_ADDRESS, MASTER_PORT)
             exec_command_blocking(ssh, f'/usr/bin/java -jar /home/cyan/master.jar {num_workers} {master_port}')
         except KeyboardInterrupt:
             cmd = "kill -s kill `ps x | grep master.jar | grep -v grep | awk '{print $1}'`"
