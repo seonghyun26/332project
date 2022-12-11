@@ -51,10 +51,10 @@ extends DistSortServer(port, ExecutionContext.global) {
   private val triggerShutdown = Promise[Unit]
   triggerShutdown.future.foreach{_ => Future { blocking {
       Thread.sleep(3000)
-      logger.info("Shutting down the server...")
+      logger.fine("Shutting down the server...")
       this.stop()
       this.blockUntilShutdown()
-      logger.info("Server shut down!")
+      logger.fine("Server shut down!")
     }
   }}
 
@@ -76,7 +76,7 @@ extends DistSortServer(port, ExecutionContext.global) {
     logger.fine("Countdown on keyRangeRequestLatch")
     keyRangeRequestLatch.await()
     val result = keyRangeResult.get
-    logger.info("Got key range, returning to worker.")
+    logger.fine("Got key range, returning to worker.")
     result
   }
 

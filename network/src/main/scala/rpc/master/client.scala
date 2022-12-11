@@ -43,16 +43,16 @@ class DistSortClient private(
   }
 
   def sendReadySignal(workerName: String, workerRpcPort: Int): Boolean = {
-    logger.info(workerName + " is ready")
+    logger.fine(workerName + " is ready")
     val request = ReadyRequest(workerName = workerName, workerRpcPort = workerRpcPort)
 
     try {
       val response = blockingStub.workerReady(request)
-      println(" >> Master: All workers are ready!")
+      logger.fine(" >> Master: All workers are ready!")
     }
     catch {
       case e: StatusRuntimeException =>
-        logger.info("RPC failed in client ready")
+        logger.fine("RPC failed in client ready")
         return false
     }
 
@@ -60,7 +60,7 @@ class DistSortClient private(
   }
 
   def sendKeyRange(workerName: String, numSamples: Int, samples: List[ByteString]): (List[ByteString], List[String]) = {
-    logger.info(workerName + " sending key range")
+    logger.fine(workerName + " sending key range")
 
     val request = KeyRangeRequest( 
       numSamples = numSamples,
@@ -69,18 +69,18 @@ class DistSortClient private(
 
     try {
       val response = blockingStub.keyRange(request)
-      println(" >> Master: Sent key range to workers!")
+      logger.fine(" >> Master: Sent key range to workers!")
       return (response.keyList.toList, response.workerIpList.toList)
     } catch {
       case e: StatusRuntimeException =>
-        logger.info("RPC failed in client keyRange")
+        logger.fine("RPC failed in client keyRange")
     }
 
     return (List(), List())
   }
 
   def partitionComplete(workerName: String): Boolean = {
-    logger.info(workerName + " partitioning completed")
+    logger.fine(workerName + " partitioning completed")
 
     val request = PartitionCompleteRequest()
 
@@ -89,10 +89,10 @@ class DistSortClient private(
 
     try {
       val response = blockingStub.partitionComplete(request)
-      println(" >> Master: All workers complete partitioning!")
+      logger.fine(" >> Master: All workers complete partitioning!")
     } catch {
       case e: StatusRuntimeException =>
-        logger.info("RPC failed in client partitionComplete")
+        logger.fine("RPC failed in client partitionComplete")
         return false
     }
 
@@ -100,16 +100,16 @@ class DistSortClient private(
   }
 
   def exchangeComplete(workerName: String): Boolean = {
-    logger.info(workerName + " exchange completed")
+    logger.fine(workerName + " exchange completed")
 
     val request = ExchangeCompleteRequest()
 
     try {
       val response = blockingStub.exchangeComplete(request)
-      println(" >> Master: All workers complete exchange!")
+      logger.fine(" >> Master: All workers complete exchange!")
     } catch {
       case e: StatusRuntimeException =>
-        logger.info("RPC failed in client exchangeComplete")
+        logger.fine("RPC failed in client exchangeComplete")
         return false
     }
 
@@ -118,16 +118,16 @@ class DistSortClient private(
 
 
   def sendFinishSignal(workerName: String): Boolean ={
-    logger.info(workerName + " sending finish signal")
+    logger.fine(workerName + " sending finish signal")
     val request = SortFinishRequest()
 
     try {
       val response = blockingStub.sortFinish(request)
-      println(" >> Master: All workers finished sorting!")
+      logger.fine(" >> Master: All workers finished sorting!")
     }
     catch {
       case e: StatusRuntimeException =>
-        logger.info("RPC failed in client sort finish")
+        logger.fine("RPC failed in client sort finish")
         return false
     }
 

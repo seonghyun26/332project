@@ -38,11 +38,11 @@ abstract class DistSortServer(port: Int, executionContext: ExecutionContext) {
       .addService(service)
       .build()
       .start()
-    this.logger.info("Server started, listening on " + port)
+    this.logger.fine("Server started, listening on " + port)
     sys.addShutdownHook {
-      logger.info("*** shutting down gRPC server since JVM is shutting down")
+      logger.fine("*** shutting down gRPC server since JVM is shutting down")
       this.stop()
-      logger.info("*** server shut down")
+      logger.fine("*** server shut down")
     }
   }
 
@@ -78,7 +78,7 @@ abstract class DistSortServer(port: Int, executionContext: ExecutionContext) {
 
   private class DistsortImpl extends DistsortMasterGrpc.DistsortMaster {
     override def workerReady(req: ReadyRequest): Future[ReadyReply] = {
-      logger.info("Received ready request from " + req.workerName)
+      logger.fine("Received ready request from " + req.workerName)
 
       val _ = handleReadyRequest(req.workerName, req.workerRpcPort)
       val reply = ReadyReply()
@@ -86,12 +86,12 @@ abstract class DistSortServer(port: Int, executionContext: ExecutionContext) {
     }
 
     override def keyRange(req: KeyRangeRequest): Future[KeyRangeReply] = {
-      logger.info("Received KeyRange request")
+      logger.fine("Received KeyRange request")
 
       val numSamples = req.numSamples;
       val samples = req.samples;
 
-      logger.info("Reveived " + numSamples + " samples from worker");
+      logger.fine("Reveived " + numSamples + " samples from worker");
       val sampleString = samples.foldRight(List[Array[Byte]]()){ (x, acc) => x.toByteArray::acc}
       val (keyList_, workerIpAddressList) = handleKeyRangeRequest(numSamples, sampleString)
       val keyList = for (key <- keyList_) yield ByteString.copyFrom(key)
@@ -104,7 +104,7 @@ abstract class DistSortServer(port: Int, executionContext: ExecutionContext) {
     }
 
     override def partitionComplete(request: PartitionCompleteRequest): Future[PartitionCompleteReply] = {
-      logger.info("Received PartitionCompleteRequest")
+      logger.fine("Received PartitionCompleteRequest")
 
       val _ = handlePartitionCompleteRequest()
       val reply = PartitionCompleteReply()
@@ -112,7 +112,7 @@ abstract class DistSortServer(port: Int, executionContext: ExecutionContext) {
     }
 
     override def exchangeComplete(request: ExchangeCompleteRequest): Future[ExchangeCompleteReply] = {
-      logger.info("Received ExchangeCompleteRequest")
+      logger.fine("Received ExchangeCompleteRequest")
 
       val _ = handleExchangeCompleteRequest()
       val reply = ExchangeCompleteReply()
@@ -120,7 +120,7 @@ abstract class DistSortServer(port: Int, executionContext: ExecutionContext) {
     }
 
     override def sortFinish(req: SortFinishRequest): Future[SortFinishReply] = {
-      logger.info("Received sortFinish request")
+      logger.fine("Received sortFinish request")
 
       val _ = handleSortFinishRequest()
       val reply = SortFinishReply()

@@ -39,7 +39,7 @@ class DistSortClient (
   }
 
   def sendPartition(workerName: String, sendToIp: String, data: List[ByteString]): Boolean = {
-    logger.info(workerName + " sending partition")
+    logger.fine(workerName + " sending partition")
 
     val request = PartitionRequest(
       workerIpAddress = sendToIp,
@@ -54,12 +54,12 @@ class DistSortClient (
     try {
       val response = stub.partition(request)
       if (response.finish) {
-        println(" >> Master : Received partition from "+ sendToIp )
+        logger.fine(" >> Master : Received partition from "+ sendToIp )
         return true
       }
     } catch {
       case e: StatusRuntimeException =>
-        logger.info("RPC failed in client sendPartition")
+        logger.fine("RPC failed in client sendPartition")
     }
 
     return false

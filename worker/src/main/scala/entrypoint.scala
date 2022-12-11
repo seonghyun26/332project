@@ -26,16 +26,16 @@ object Entrypoint {
   val defaultWorkerRpcPort = 50050
 
   def main(args: Array[String]): Unit = {
-    logger.info("Starting worker ")
+    logger.fine("Starting worker ")
 
     val (masterHost, masterPort, inputDirs, outputDir, bindingPort) = parseArgs(args)
     val thisWorkerRpcPort = if (bindingPort.isDefined) bindingPort.get else defaultWorkerRpcPort
 
-    logger.info("Master host: " + masterHost)
-    logger.info("Master port: " + masterPort)
-    logger.info("Input directory: " + inputDirs)
-    logger.info("Output directory: " + outputDir)
-    logger.info("This worker's RPC port: " + thisWorkerRpcPort)
+    logger.fine("Master host: " + masterHost)
+    logger.fine("Master port: " + masterPort)
+    logger.fine("Input directory: " + inputDirs)
+    logger.fine("Output directory: " + outputDir)
+    logger.fine("This worker's RPC port: " + thisWorkerRpcPort)
 
     val master = Master(masterHost, masterPort)
 
@@ -44,34 +44,34 @@ object Entrypoint {
     val partitionWorker = new Worker(inputDirs, partitionDir)
     val blocks = partitionWorker.blocks
 
-    logger.info("Worker ready")
+    logger.fine("Worker ready")
     master.sendReadySignal(workerName, thisWorkerRpcPort)
 
     // Sample from blocks and send them to master
     val sample = partitionWorker.sample(blocks)
 
-    logger.info("# tuples sampled : " + sample.length)
+    logger.fine("# tuples sampled : " + sample.length)
 
     val (bytes, workerIpList) = master.sendKeyRange(workerName, sample.length, sample)
 
-    logger.info("Worker gets key range from master")
-    logger.info("Another workers: " + workerIpList)
+    logger.fine("Worker gets key range from master")
+    logger.fine("Another workers: " + workerIpList)
 
     // Partition blocks by given key range
     val keyRange = bytes map { byte => Key.fromBytes(byte.toByteArray.toList) }
 
-    logger.info("Partition started")
+    logger.fine("Partition started")
 
     val partitionedBlocks = partitionWorker.partition(blocks, keyRange)
 
-    logger.info("Partition completed")
+    logger.fine("Partition completed")
 
     // Sort partitioned blocks
     for (block <- partitionedBlocks) {
       block.sortThenSave
     }
 
-    logger.info("Each partitioned blocks are now sorted")
+    logger.fine("Each partitioned blocks are now sorted")
 
     // Start server for receiving blocks
     // print(workerIpList)
@@ -79,12 +79,12 @@ object Entrypoint {
     val workerServer = new WorkerServer(receivedDir)
     workerServer.start(thisWorkerRpcPort)
 
-    logger.info("Ready to send partition to other workers")
+    logger.fine("Ready to send partition to other workers")
 
     // Send signal to master to sync.
     master.partitionComplete(workerName)
 
-    logger.info("Partition send started")
+    logger.fine("Partition send started")
 
     // Repeatedly send partitioned blocks to other workers
     for {
@@ -96,28 +96,28 @@ object Entrypoint {
       workerClient.sendPartition(workerName, destIP, byteStringList)
     }
 
-    logger.info("Partition send completed")
+    logger.fine("Partition send completed")
 
     // Send signal to master to sync.
     master.exchangeComplete(workerName)
     workerServer.stop()
 
-    logger.info("Merge started")
+    logger.fine("Merge started")
 
     val mergeWorker = new Worker(List(receivedDir), outputDir)
     val recievedBlocks = mergeWorker.blocks
     val mergedBlocks = mergeWorker.merge(recievedBlocks)
 
-    logger.info("Merge completed")
+    logger.fine("Merge completed")
 
     master.sendFinishSignal(workerName)
 
-    logger.info("Removing temp files...")
+    logger.fine("Removing temp files...")
 
     removeFilesInDir(receivedDir)
     removeFilesInDir(partitionDir)
 
-    logger.info("Complete!")
+    logger.fine("Complete!")
   }
 
   def parseArgs(args: Array[String]): (String, Int, List[String], String, Option[Int]) = {
