@@ -49,7 +49,7 @@ class TestcaseRunner:
     def run(self) -> bool:
         num_workers = self.testcase.num_workers
         from_workers = [Queue() for _ in range(num_workers)]
-        master_process = Process(target=self._run_master, args=[num_workers, self.testcase.config.master_port])
+        master_process = Process(target=self._run_master, args=[num_workers, self.testcase.config['master_port']])
         worker_processes = [Process(target=self._run_worker, args=[worker['index'], from_workers[i]]) for i, worker in enumerate(self.testcase.workers)]
         try:
             print('Running master...')
