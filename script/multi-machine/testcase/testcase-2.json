@@ -1,5 +1,6 @@
 {
   "name": "multiple workers - 1",
+  "master_port": 37000,
   "workers": [
     {
       "index": 0,

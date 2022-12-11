@@ -16,10 +16,10 @@ class TestcaseRunner:
     def __init__(self, testcase: Testcase):
         self.testcase = testcase
 
-    def _run_master(self, num_workers: int):
+    def _run_master(self, num_workers: int, master_port: int):
         try:
             ssh = createSSHClient(MASTER_IP_ADDRESS, MASTER_PORT)
-            exec_command_blocking(ssh, f'/usr/bin/java -jar /home/cyan/master.jar {num_workers}')
+            exec_command_blocking(ssh, f'/usr/bin/java -jar /home/cyan/master.jar {num_workers} {master_port}')
         except KeyboardInterrupt:
             cmd = "kill -s kill `ps x | grep master.jar | grep -v grep | awk '{print $1}'`"
             exec_command_blocking(ssh, cmd)
@@ -49,7 +49,7 @@ class TestcaseRunner:
     def run(self) -> bool:
         num_workers = self.testcase.num_workers
         from_workers = [Queue() for _ in range(num_workers)]
-        master_process = Process(target=self._run_master, args=[num_workers])
+        master_process = Process(target=self._run_master, args=[num_workers, self.testcase.config.master_port])
         worker_processes = [Process(target=self._run_worker, args=[worker['index'], from_workers[i]]) for i, worker in enumerate(self.testcase.workers)]
         try:
             print('Running master...')

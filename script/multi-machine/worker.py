@@ -3,7 +3,6 @@ import os
 import json
 
 MASTER_HOST = "2.2.2.101"
-MASTER_PORT = 55555
 
 NUM_TUPLE_PER_BLOCK = 335544
 
@@ -59,13 +58,13 @@ def parse_config(config, worker_idx):
     return block_cnt_list, offset
 
 
-def make_command(num_input_dirs):
+def make_command(num_input_dirs, master_port):
     input_dirs = ""
     for idx in range(num_input_dirs):
         input_dirs += f"./input/{idx} "
     output_dir = "./output"
 
-    cmd = f"/usr/bin/java -jar worker.jar {MASTER_HOST}:{MASTER_PORT} "
+    cmd = f"/usr/bin/java -jar worker.jar {MASTER_HOST}:{master_port} "
     cmd += f"-I {input_dirs} "
     cmd += f"-O {output_dir} "
     return cmd
@@ -193,7 +192,7 @@ if __name__ == "__main__":
     for idx, block_cnt in enumerate(block_cnt_list):
         make_blocks(f"{INPUT_DIR}/{idx}", block_cnt)
 
-    cmd = make_command(num_input_dirs)
+    cmd = make_command(num_input_dirs, config['master_port'])
     os.system(cmd)
 
     dist_info = dist_info_all_file(OUTPUT_DIR)

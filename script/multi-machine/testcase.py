@@ -26,6 +26,7 @@ class Testcase:
         self.config_file_name = config_file_path.split('/')[-1]
         self.config = {
             'name': config['name'],
+            'master_port': config['master_port'],
             'workers': [ { 'index': worker['index'], 'blocks': worker['blocks'] } for worker in config['workers'] ]
         }
         # just for convenience
@@ -36,6 +37,10 @@ class Testcase:
     def _validate_config(config: dict):
         if 'name' not in config:
             raise ConfigException('Testcase name not specified')
+        if 'master_port' not in config:
+            raise ConfigException('Master port not specified')
+        if not isinstance(config['master_port'], int):
+            raise ConfigException('Master port must be an integer')
         if 'workers' not in config:
             raise ConfigException('Testcase workers not specified')
         if not isinstance(config['workers'], list):
