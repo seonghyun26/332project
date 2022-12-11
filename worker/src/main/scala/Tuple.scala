@@ -41,8 +41,17 @@ class Tuple(key_ :String, value_ :String) extends Comparable[Tuple] {
   val key: Key = Key(key_)
   val value: String = value_
 
+  def byteToString(byte: Byte): String = {
+    val str = byte.toHexString.takeRight(2)
+    ("00" + str).substring(str.length)
+  }
+
+  def byteArrayToString(bytes: Array[Byte]): String = {
+    (bytes map byteToString).mkString(" ")
+  }
+
   override def toString(): String = {
-    "KEY | %s".format(key.value)
+    "KEY | %s".format(byteArrayToString(key.asBytes))
   }
 
   def toByteString: ByteString = {
