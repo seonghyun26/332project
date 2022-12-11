@@ -1,0 +1,14 @@
+{
+  "name": "multiple workers - 1",
+  "master_port": 37001,
+  "workers": [
+    {
+      "index": 0,
+      "blocks": [1, 1]
+    },
+    {
+      "index": 1,
+      "blocks": [1, 1]
+    }
+  ]
+}
