@@ -16,7 +16,7 @@ class KeySuite extends AnyFunSuite {
       List(107, 19, 72, 32, 120, 19, 57, 40, 211, 183),
     )
     for (r <- rhs) {
-      assert(Key.MIN < Key(r.map(_.toByte)))
+      assert(Key.MIN < Key.fromBytes(r.map(_.toByte)))
     }
     assert(Key.MIN < Key.MAX)
     assert(Key.MIN == Key.MIN)
@@ -37,7 +37,7 @@ class KeySuite extends AnyFunSuite {
       List(107, 19, 72, 32, 120, 19, 57, 40, 211, 183),
     )
     for (r <- rhs) {
-      assert(Key(r.map(_.toByte)) < Key.MAX)
+      assert(Key.fromBytes(r.map(_.toByte)) < Key.MAX)
     }
     assert(Key.MIN < Key.MAX)
     assert(Key.MAX == Key.MAX)

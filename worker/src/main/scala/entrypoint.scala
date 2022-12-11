@@ -58,7 +58,7 @@ object Entrypoint {
     logger.info("Another workers: " + workerIpList)
 
     // Partition blocks by given key range
-    val keyRange = bytes map { byte => Key(byte.toByteArray.toList) }
+    val keyRange = bytes map { byte => Key.fromBytes(byte.toByteArray.toList) }
 
     logger.info("Partition started")
 
@@ -205,7 +205,7 @@ class WorkerServer(val saveDir: String) extends DistSortServer(ExecutionContext.
   private var idx = 0
 
   override def handlePartition(receivedData: List[ByteString]): Unit = {
-    val tuples = receivedData map { byte => Tuple(byte.toByteArray.toList) }
+    val tuples = receivedData map { byte => Tuple.fromBytes(byte.toByteArray) }
     var curIdx = 0
 
     try {
