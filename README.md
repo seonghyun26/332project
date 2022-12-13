@@ -5,20 +5,20 @@ You can check out the [design docs](https://github.com/seonghyun26/332project/tr
 
 # How to Run
 
-1. First build the project. The command belows make worker.jar, master.jar.
+1. First, build the project. The commands below create worker.jar and master.jar.
 ```sh
-  chmod +x ./*.sh
-  ./build.sh
+sbt "worker/assembly"
+sbt "master/assembly"
 ```
 
 2. Now run the scripts.
 
-- For master,
+For master,
 ```sh
-  ./master.sh (\# of slaves)
+./master.sh <# of slaves> [rpc port to bind to]
 ```
 
-- For slave,
+For slave,
 ```sh
-  ./slave (master IP):(master port) -I (input directories) -O (output directory)
+./slave.sh <master IP address>:<master rpc port> -I <input directory> [input directory...] -O <output directory> [-P <inter-slave rpc port>]
 ```
