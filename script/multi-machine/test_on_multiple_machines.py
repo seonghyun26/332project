@@ -80,7 +80,8 @@ if __name__ == '__main__':
     do_setup = input('Setup machines? (y/n): ')
     if do_setup == 'y':
         print('Setting up machines...')
-        setup_machines()
+        compile_jar = True if input('Compile jar? (y/n): ') == 'y' else False
+        setup_machines(compile_jar=compile_jar)
         print('Setup complete')
     else:
         print('Skipping setup...')
